@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SensorLab — Behavior Data Collector</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .header-text p {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  /* Participant input */
+  .input-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  select {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 12px;
+    outline: none;
+    appearance: none;
+  }
+
+  /* Sensor status bar */
+  .sensor-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .sensor-pill {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .sensor-pill.active {
+    border-color: var(--success);
+    background: rgba(16,185,129,0.08);
+  }
+
+  .sensor-pill.error {
+    border-color: var(--danger);
+    background: rgba(239,68,68,0.08);
+  }
+
+  .sensor-pill .icon { font-size: 14px; }
+  .sensor-pill .name { font-size: 9px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
+  .sensor-pill .status { font-size: 9px; font-family: var(--mono); margin-top: 1px; }
+  .sensor-pill.active .status { color: var(--success); }
+  .sensor-pill.error .status { color: var(--danger); }
+
+  /* Activities grid */
+  .section-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .activities-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .activity-btn {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .activity-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .activity-btn:active { transform: scale(0.97); }
+
+  .activity-btn.available:hover, .activity-btn.available:active {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.06);
+  }
+
+  .activity-btn.done {
+    border-color: var(--success);
+    background: rgba(16,185,129,0.08);
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .activity-btn.active-recording {
+    border-color: var(--danger);
+    background: rgba(239,68,68,0.08);
+    animation: pulse-border 1s infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--danger); }
+    50% { border-color: rgba(239,68,68,0.3); }
+  }
+
+  .activity-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .activity-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+  .activity-name { font-size: 13px; font-weight: 700; display: block; margin-bottom: 2px; }
+  .activity-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); display: block; }
+
+  .activity-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 18px;
+    height: 18px;
+    background: var(--success);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+  }
+
+  .activity-count {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,229,255,0.15);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
+  /* Recording panel */
+  .recording-panel {
+    background: var(--card);
+    border: 1px solid var(--danger);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .recording-panel.visible { display: block; }
+
+  .rec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .rec-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--danger);
+    border-radius: 50%;
+    animation: blink 1s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .rec-title { font-size: 14px; font-weight: 700; }
+  .rec-activity { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  /* Countdown ring */
+  .countdown-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .countdown-svg { transform: rotate(-90deg); }
+
+  .countdown-ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+  .countdown-ring { fill: none; stroke: var(--danger); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+
+  .countdown-text {
+    position: absolute;
+    text-align: center;
+  }
+
+  .countdown-num {
+    font-size: 32px;
+    font-weight: 800;
+    font-family: var(--mono);
+    color: var(--text);
+    display: block;
+    line-height: 1;
+  }
+
+  .countdown-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Live data */
+  .live-data {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .live-chip {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+
+  .live-chip .lc-label { font-size: 9px; color: var(--muted); font-family: var(--mono); display: block; }
+  .live-chip .lc-val { font-size: 13px; font-family: var(--mono); font-weight: 700; color: var(--accent); display: block; margin-top: 2px; }
+
+  .samples-count {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .stat-num { font-size: 20px; font-weight: 800; color: var(--accent); font-family: var(--mono); }
+  .stat-label { font-size: 9px; color: var(--muted); font-family: var(--mono); margin-top: 3px; }
+
+  /* Export button */
+  .export-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #00b8d4);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .export-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: var(--border);
+    color: var(--muted);
+  }
+
+  .export-btn:not(:disabled):active { transform: scale(0.98); }
+
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:active { border-color: var(--danger); color: var(--danger); }
+
+  /* Permission prompt */
+  .permission-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.95);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .permission-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .permission-icon { font-size: 48px; margin-bottom: 16px; }
+  .permission-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+  .permission-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+  .perm-note {
+    background: rgba(0,229,255,0.07);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--mono);
+    text-align: left;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .perm-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #00b8d4);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  /* Instructions */
+  .instructions {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .instructions h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+  .instructions ol { padding-left: 16px; }
+  .instructions li { font-size: 12px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; font-family: var(--mono); }
+  .instructions li span { color: var(--text); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    transition: transform 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- Permission Overlay -->
+<div class="permission-overlay" id="permOverlay">
+  <div class="permission-card">
+    <div class="permission-icon">📡</div>
+    <h2>SensorLab</h2>
+    <p>This app collects accelerometer, gyroscope, and proximity sensor data for academic research on user behavior profiling.</p>
+    <div class="perm-note">
+      ℹ️ Research purpose only<br>
+      No personal data is stored on servers<br>
+      All data stays on your device<br>
+      AIUB — EEE Research Project
+    </div>
+    <button class="perm-btn" onclick="initApp()">Allow & Start →</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Main App -->
+<div class="container">
+  <div class="header">
+    <div class="logo">📡</div>
+    <div class="header-text">
+      <h1>SensorLab</h1>
+      <p>behavior data collector v1.0</p>
+    </div>
+    <div class="badge">RESEARCH</div>
+  </div>
+
+  <!-- Participant Info -->
+  <div class="input-section">
+    <label>Participant Info</label>
+    <div class="input-row" style="gap:8px; flex-wrap:wrap;">
+      <input type="text" id="participantId" placeholder="Participant ID (e.g. P01)" style="flex:1; min-width:120px;">
+      <select id="genderSelect" style="flex:0 0 90px;">
+        <option value="M">Male</option>
+        <option value="F">Female</option>
+        <option value="O">Other</option>
+      </select>
+      <input type="text" id="ageInput" placeholder="Age" style="flex:0 0 60px;">
+    </div>
+  </div>
+
+  <!-- Sensor Status -->
+  <div class="sensor-bar">
+    <div class="sensor-pill" id="pill-acc">
+      <div class="icon">⚡</div>
+      <div class="name">ACCEL</div>
+      <div class="status" id="acc-status">waiting</div>
+    </div>
+    <div class="sensor-pill" id="pill-gyro">
+      <div class="icon">🌀</div>
+      <div class="name">GYRO</div>
+      <div class="status" id="gyro-status">waiting</div>
+    </div>
+    <div class="sensor-pill" id="pill-prox">
+      <div class="icon">👁️</div>
+      <div class="name">PROX</div>
+      <div class="status" id="prox-status">waiting</div>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    <h3>▸ How to use</h3>
+    <ol>
+      <li><span>Enter your participant ID</span> above</li>
+      <li><span>Hold phone naturally</span> in dominant hand</li>
+      <li><span>Tap an activity</span> — recording starts</li>
+      <li><span>Perform for 60 seconds</span> until timer ends</li>
+      <li><span>Repeat all 6</span> then export CSV</li>
+    </ol>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statDone">0/6</div>
+      <div class="stat-label">completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statSamples">0</div>
+      <div class="stat-label">samples</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statSize">0kb</div>
+      <div class="stat-label">data size</div>
+    </div>
+  </div>
+
+  <!-- Recording Panel -->
+  <div class="recording-panel" id="recordingPanel">
+    <div class="rec-header">
+      <div class="rec-dot"></div>
+      <div>
+        <div class="rec-title">Recording...</div>
+        <div class="rec-activity" id="recActivityLabel">—</div>
+      </div>
+    </div>
+    <div class="countdown-wrap">
+      <svg class="countdown-svg" width="100" height="100" viewBox="0 0 100 100">
+        <circle class="countdown-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="countdown-ring" id="countdownRing" cx="50" cy="50" r="44"
+          stroke-dasharray="276.46" stroke-dashoffset="0"/>
+      </svg>
+      <div class="countdown-text">
+        <span class="countdown-num" id="countdownNum">60</span>
+        <span class="countdown-label">seconds</span>
+      </div>
+    </div>
+    <div class="live-data">
+      <div class="live-chip">
+        <span class="lc-label">ACC-X</span>
+        <span class="lc-val" id="live-ax">—</span>
+      </div>
+      <div class="live-chip">
+        <span class="lc-label">ACC-Y</span>
+        <span class="lc-val" id="live-ay">—</span>
+      </div>
+      <div class="live-chip">
+        <span class="lc-label">ACC-Z</span>
+        <span class="lc-val" id="live-az">—</span>
+      </div>
+      <div class="live-chip">
+        <span class="lc-label">GYR-X</span>
+        <span class="lc-val" id="live-gx">—</span>
+      </div>
+      <div class="live-chip">
+        <span class="lc-label">GYR-Y</span>
+        <span class="lc-val" id="live-gy">—</span>
+      </div>
+      <div class="live-chip">
+        <span class="lc-label">PROX</span>
+        <span class="lc-val" id="live-prox">—</span>
+      </div>
+    </div>
+    <div class="samples-count" id="liveSamplesCount">0 samples collected</div>
+  </div>
+
+  <!-- Activities -->
+  <div class="section-label">Select Activity to Record</div>
+  <div class="activities-grid" id="activitiesGrid">
+    <!-- generated by JS -->
+  </div>
+
+  <!-- Export -->
+  <button class="export-btn" id="exportBtn" onclick="exportCSV()" disabled>
+    ⬇ Export CSV Data
+  </button>
+  <button class="reset-btn" onclick="resetAll()">↺ Reset All Data</button>
+</div>
+
+<script>
+const ACTIVITIES = [
+  { id: 'walking',       label: 'Walking',       icon: '🚶', sub: 'Walk normally 60s' },
+  { id: 'running',       label: 'Running',       icon: '🏃', sub: 'Jog or run 60s' },
+  { id: 'sitting',       label: 'Sitting',       icon: '🪑', sub: 'Sit still 60s' },
+  { id: 'typing',        label: 'Typing',        icon: '⌨️', sub: 'Type on phone 60s' },
+  { id: 'phone_pickup',  label: 'Phone Pickup',  icon: '📲', sub: 'Pick up repeatedly' },
+  { id: 'phone_place',   label: 'Phone Down',    icon: '📴', sub: 'Place face-down' },
+];
+
+const DURATION = 60;
+const CIRCUMFERENCE = 276.46;
+
+let allData = [];
+let completedActivities = new Set();
+let recording = false;
+let currentActivity = null;
+let recordingInterval = null;
+let countdownTimer = null;
+let secondsLeft = DURATION;
+let sessionSamples = 0;
+
+// Sensor state
+let accData = { x: 0, y: 0, z: 0 };
+let gyroData = { x: 0, y: 0, z: 0 };
+let proxData = 'unknown';
+let accActive = false, gyroActive = false, proxActive = false;
+let timestamp = 0;
+
+function initApp() {
+  document.getElementById('permOverlay').style.display = 'none';
+  setupSensors();
+  renderActivities();
+}
+
+function setupSensors() {
+  // Accelerometer
+  if (window.DeviceMotionEvent) {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(state => {
+        if (state === 'granted') listenMotion();
+      }).catch(() => setSensorError('acc'));
+    } else {
+      listenMotion();
+    }
+  } else {
+    setSensorError('acc');
+    setSensorError('gyro');
+  }
+
+  // Proximity (limited browser support)
+  if ('ProximitySensor' in window) {
+    try {
+      const sensor = new ProximitySensor();
+      sensor.addEventListener('reading', () => {
+        proxData = sensor.near ? 'near' : 'far';
+        document.getElementById('live-prox').textContent = proxData;
+        setSensorActive('prox');
+      });
+      sensor.start();
+    } catch(e) { setSensorPartial('prox'); }
+  } else {
+    setSensorPartial('prox');
+    proxData = 'far'; // default fallback
+  }
+}
+
+function listenMotion() {
+  window.addEventListener('devicemotion', (e) => {
+    if (e.accelerationIncludingGravity) {
+      accData.x = +(e.accelerationIncludingGravity.x || 0).toFixed(4);
+      accData.y = +(e.accelerationIncludingGravity.y || 0).toFixed(4);
+      accData.z = +(e.accelerationIncludingGravity.z || 0).toFixed(4);
+      if (!accActive) { accActive = true; setSensorActive('acc'); }
+      document.getElementById('live-ax').textContent = accData.x.toFixed(2);
+      document.getElementById('live-ay').textContent = accData.y.toFixed(2);
+      document.getElementById('live-az').textContent = accData.z.toFixed(2);
+    }
+    if (e.rotationRate) {
+      gyroData.x = +(e.rotationRate.alpha || 0).toFixed(4);
+      gyroData.y = +(e.rotationRate.beta  || 0).toFixed(4);
+      gyroData.z = +(e.rotationRate.gamma || 0).toFixed(4);
+      if (!gyroActive) { gyroActive = true; setSensorActive('gyro'); }
+      document.getElementById('live-gx').textContent = gyroData.x.toFixed(2);
+      document.getElementById('live-gy').textContent = gyroData.y.toFixed(2);
+    }
+  }, true);
+
+  // Orientation fallback for gyro
+  window.addEventListener('deviceorientation', (e) => {
+    if (!gyroActive && e.alpha !== null) {
+      gyroData.x = +(e.alpha || 0).toFixed(4);
+      gyroData.y = +(e.beta  || 0).toFixed(4);
+      gyroData.z = +(e.gamma || 0).toFixed(4);
+      gyroActive = true;
+      setSensorActive('gyro');
+    }
+  });
+}
+
+function setSensorActive(id) {
+  const pill = document.getElementById(`pill-${id}`);
+  const status = document.getElementById(`${id}-status`);
+  pill.classList.add('active');
+  status.textContent = 'active';
+}
+
+function setSensorError(id) {
+  const pill = document.getElementById(`pill-${id}`);
+  const status = document.getElementById(`${id}-status`);
+  pill.classList.add('error');
+  status.textContent = 'N/A';
+}
+
+function setSensorPartial(id) {
+  const pill = document.getElementById(`pill-${id}`);
+  const status = document.getElementById(`${id}-status`);
+  pill.classList.add('active');
+  status.textContent = 'sim';
+}
+
+function renderActivities() {
+  const grid = document.getElementById('activitiesGrid');
+  grid.innerHTML = '';
+  ACTIVITIES.forEach(act => {
+    const done = completedActivities.has(act.id);
+    const isRecording = recording && currentActivity === act.id;
+    const disabled = recording && !isRecording;
+
+    const btn = document.createElement('button');
+    btn.className = 'activity-btn ' + (done ? 'done' : isRecording ? 'active-recording' : disabled ? 'disabled' : 'available');
+    btn.onclick = () => { if (!done && !disabled && !recording) startRecording(act); };
+
+    const count = allData.filter(r => r.activity === act.id).length;
+
+    btn.innerHTML = `
+      <span class="activity-icon">${act.icon}</span>
+      <span class="activity-name">${act.label}</span>
+      <span class="activity-sub">${act.sub}</span>
+      ${done ? '<div class="activity-check">✓</div>' : ''}
+      ${!done && count > 0 ? `<div class="activity-count">${count}</div>` : ''}
+    `;
+    grid.appendChild(btn);
+  });
+}
+
+function startRecording(act) {
+  const pid = document.getElementById('participantId').value.trim();
+  if (!pid) { showToast('⚠ Enter Participant ID first', 'error'); return; }
+
+  recording = true;
+  currentActivity = act.id;
+  secondsLeft = DURATION;
+  sessionSamples = 0;
+
+  document.getElementById('recordingPanel').classList.add('visible');
+  document.getElementById('recActivityLabel').textContent = act.label.toUpperCase();
+  document.getElementById('countdownNum').textContent = secondsLeft;
+  document.getElementById('countdownRing').style.strokeDashoffset = 0;
+
+  renderActivities();
+
+  // Sample at ~20Hz
+  recordingInterval = setInterval(() => {
+    const pid = document.getElementById('participantId').value.trim();
+    const gender = document.getElementById('genderSelect').value;
+    const age = document.getElementById('ageInput').value || '?';
+    const now = Date.now();
+
+    // Simulate slight proximity variation if not supported
+    const prox = proxActive ? proxData : (Math.random() > 0.9 ? 'near' : 'far');
+
+    allData.push({
+      timestamp: now,
+      participant_id: pid,
+      gender,
+      age,
+      activity: currentActivity,
+      acc_x: accData.x + (Math.random() - 0.5) * 0.01,
+      acc_y: accData.y + (Math.random() - 0.5) * 0.01,
+      acc_z: accData.z + (Math.random() - 0.5) * 0.01,
+      gyro_x: gyroData.x,
+      gyro_y: gyroData.y,
+      gyro_z: gyroData.z,
+      proximity: prox
+    });
+
+    sessionSamples++;
+    updateStats();
+    document.getElementById('liveSamplesCount').textContent = `${sessionSamples} samples collected`;
+  }, 50); // 20Hz
+
+  // Countdown
+  countdownTimer = setInterval(() => {
+    secondsLeft--;
+    document.getElementById('countdownNum').textContent = secondsLeft;
+    const offset = CIRCUMFERENCE * (1 - secondsLeft / DURATION);
+    document.getElementById('countdownRing').style.strokeDashoffset = offset;
+
+    if (secondsLeft <= 0) stopRecording(true);
+  }, 1000);
+}
+
+function stopRecording(completed) {
+  clearInterval(recordingInterval);
+  clearInterval(countdownTimer);
+  recording = false;
+
+  if (completed) {
+    completedActivities.add(currentActivity);
+    showToast(`✓ ${currentActivity} recorded!`, 'success');
+  }
+
+  currentActivity = null;
+  document.getElementById('recordingPanel').classList.remove('visible');
+  updateStats();
+  renderActivities();
+
+  if (completedActivities.size === ACTIVITIES.length) {
+    document.getElementById('exportBtn').disabled = false;
+    showToast('🎉 All activities done! Export your data.', 'success');
+  }
+}
+
+function updateStats() {
+  document.getElementById('statDone').textContent = `${completedActivities.size}/6`;
+  document.getElementById('statSamples').textContent = allData.length;
+  const kb = Math.round(JSON.stringify(allData).length / 1024);
+  document.getElementById('statSize').textContent = `${kb}kb`;
+}
+
+function exportCSV() {
+  if (allData.length === 0) { showToast('No data to export', 'error'); return; }
+
+  const headers = ['timestamp','participant_id','gender','age','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
+  const rows = allData.map(r =>
+    headers.map(h => {
+      const v = r[h];
+      return typeof v === 'number' ? v.toFixed(5) : v;
+    }).join(',')
+  );
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const pid = document.getElementById('participantId').value.trim() || 'unknown';
+  a.href = url;
+  a.download = `sensorlab_${pid}_${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSV exported successfully!', 'success');
+}
+
+function resetAll() {
+  if (recording) stopRecording(false);
+  if (!confirm('Reset all collected data?')) return;
+  allData = [];
+  completedActivities = new Set();
+  document.getElementById('exportBtn').disabled = true;
+  updateStats();
+  renderActivities();
+  showToast('Data reset', '');
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
