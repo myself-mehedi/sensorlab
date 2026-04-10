@@ -4,22 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>SensorLab — Behavior Data Collector</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --card: #1a1a26;
-    --border: #2a2a3a;
-    --accent: #00e5ff;
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #d1d9f0;
+    --accent: #2563eb;
     --accent2: #7c3aed;
-    --warn: #f59e0b;
-    --danger: #ef4444;
-    --success: #10b981;
-    --text: #e8e8f0;
-    --muted: #6b6b80;
+    --accent-light: #eff6ff;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
+    --warn: #d97706;
+    --text: #111827;
+    --text2: #374151;
+    --muted: #6b7280;
     --mono: 'JetBrains Mono', monospace;
-    --sans: 'Syne', sans-serif;
+    --sans: 'Inter', sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -29,28 +33,12 @@
     color: var(--text);
     font-family: var(--sans);
     min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Animated grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
   }
 
   .container {
-    position: relative;
-    z-index: 1;
     max-width: 480px;
     margin: 0 auto;
-    padding: 20px 16px 40px;
+    padding: 20px 16px 48px;
   }
 
   /* Header */
@@ -58,238 +46,304 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    background: var(--accent);
+    border-radius: 16px;
+    padding: 16px;
   }
 
   .logo {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
     flex-shrink: 0;
   }
 
   .header-text h1 {
     font-size: 18px;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    color: #ffffff;
+    letter-spacing: -0.3px;
   }
 
   .header-text p {
     font-size: 11px;
-    color: var(--muted);
+    color: rgba(255,255,255,0.7);
     font-family: var(--mono);
     margin-top: 2px;
   }
 
   .badge {
     margin-left: auto;
-    background: rgba(0,229,255,0.1);
-    border: 1px solid rgba(0,229,255,0.3);
-    color: var(--accent);
+    background: rgba(255,255,255,0.2);
+    color: #ffffff;
     font-family: var(--mono);
     font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
   }
 
-  /* Participant input */
-  .input-section {
+  /* Cards */
+  .card {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 14px;
     padding: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
 
-  .input-section label {
-    display: block;
+  .card-label {
     font-size: 11px;
+    font-weight: 600;
     color: var(--muted);
-    font-family: var(--mono);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
+  /* Inputs */
   .input-row {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   input[type="text"] {
     flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    min-width: 100px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
     color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: 10px 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
     outline: none;
     transition: border-color 0.2s;
   }
 
-  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]:focus { border-color: var(--accent); background: #fff; }
+  input[type="text"]::placeholder { color: var(--muted); }
 
   select {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
     color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 10px 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
     outline: none;
     appearance: none;
+    cursor: pointer;
   }
 
-  /* Sensor status bar */
+  /* Sensor pills */
   .sensor-bar {
     display: flex;
     gap: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .sensor-pill {
     flex: 1;
     background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 6px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 6px;
     text-align: center;
     transition: all 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
 
   .sensor-pill.active {
     border-color: var(--success);
-    background: rgba(16,185,129,0.08);
+    background: var(--success-light);
   }
 
   .sensor-pill.error {
     border-color: var(--danger);
-    background: rgba(239,68,68,0.08);
+    background: var(--danger-light);
   }
 
-  .sensor-pill .icon { font-size: 14px; }
-  .sensor-pill .name { font-size: 9px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
-  .sensor-pill .status { font-size: 9px; font-family: var(--mono); margin-top: 1px; }
-  .sensor-pill.active .status { color: var(--success); }
-  .sensor-pill.error .status { color: var(--danger); }
+  .sensor-pill .s-icon { font-size: 16px; }
+  .sensor-pill .s-name { font-size: 9px; font-family: var(--mono); color: var(--muted); margin-top: 3px; font-weight: 700; }
+  .sensor-pill .s-status { font-size: 9px; font-family: var(--mono); margin-top: 2px; color: var(--muted); }
+  .sensor-pill.active .s-status { color: var(--success); font-weight: 700; }
+  .sensor-pill.error .s-status { color: var(--danger); font-weight: 700; }
 
-  /* Activities grid */
-  .section-label {
-    font-size: 11px;
-    color: var(--muted);
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
     font-family: var(--mono);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Instructions */
+  .instructions {
+    background: var(--accent-light);
+    border: 1.5px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .instructions h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .instructions ol { padding-left: 18px; }
+
+  .instructions li {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 5px;
+    line-height: 1.5;
+  }
+
+  .instructions li strong { color: var(--text); }
+
+  /* Section label */
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
+  /* Activities */
   .activities-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .activity-btn {
     background: var(--card);
-    border: 1.5px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: 14px;
     padding: 16px 12px;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: all 0.2s;
     text-align: left;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-
-  .activity-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .activity-btn:active { transform: scale(0.97); }
 
   .activity-btn.available:hover, .activity-btn.available:active {
     border-color: var(--accent);
-    background: rgba(0,229,255,0.06);
+    background: var(--accent-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.15);
   }
 
   .activity-btn.done {
     border-color: var(--success);
-    background: rgba(16,185,129,0.08);
-    opacity: 0.7;
+    background: var(--success-light);
+    opacity: 0.85;
     cursor: default;
   }
 
   .activity-btn.active-recording {
     border-color: var(--danger);
-    background: rgba(239,68,68,0.08);
+    background: var(--danger-light);
     animation: pulse-border 1s infinite;
   }
 
   @keyframes pulse-border {
     0%, 100% { border-color: var(--danger); }
-    50% { border-color: rgba(239,68,68,0.3); }
+    50% { border-color: #fca5a5; }
   }
 
   .activity-btn.disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
-  .activity-icon { font-size: 24px; margin-bottom: 8px; display: block; }
-  .activity-name { font-size: 13px; font-weight: 700; display: block; margin-bottom: 2px; }
-  .activity-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); display: block; }
+  .activity-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+
+  .activity-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .activity-sub {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    display: block;
+  }
 
   .activity-check {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     background: var(--success);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 11px;
     color: white;
-  }
-
-  .activity-count {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,229,255,0.15);
-    border: 1px solid rgba(0,229,255,0.3);
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 9px;
-    padding: 2px 5px;
-    border-radius: 4px;
+    font-weight: 700;
   }
 
   /* Recording panel */
   .recording-panel {
-    background: var(--card);
-    border: 1px solid var(--danger);
+    background: var(--danger-light);
+    border: 2px solid var(--danger);
     border-radius: 16px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     display: none;
   }
 
@@ -303,8 +357,8 @@
   }
 
   .rec-dot {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: var(--danger);
     border-radius: 50%;
     animation: blink 1s infinite;
@@ -316,21 +370,30 @@
     50% { opacity: 0.2; }
   }
 
-  .rec-title { font-size: 14px; font-weight: 700; }
-  .rec-activity { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .rec-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--danger);
+  }
 
-  /* Countdown ring */
+  .rec-activity {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 600;
+  }
+
+  /* Countdown */
   .countdown-wrap {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 16px 0;
+    margin: 12px 0;
     position: relative;
   }
 
   .countdown-svg { transform: rotate(-90deg); }
-
-  .countdown-ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+  .countdown-ring-bg { fill: none; stroke: #fecaca; stroke-width: 6; }
   .countdown-ring { fill: none; stroke: var(--danger); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
 
   .countdown-text {
@@ -339,10 +402,10 @@
   }
 
   .countdown-num {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 800;
     font-family: var(--mono);
-    color: var(--text);
+    color: var(--danger);
     display: block;
     line-height: 1;
   }
@@ -350,9 +413,10 @@
   .countdown-label {
     font-size: 10px;
     color: var(--muted);
-    font-family: var(--mono);
+    font-weight: 600;
     margin-top: 4px;
     display: block;
+    text-transform: uppercase;
   }
 
   /* Live data */
@@ -364,14 +428,30 @@
   }
 
   .live-chip {
-    background: var(--surface);
+    background: #fff;
+    border: 1px solid #fecaca;
     border-radius: 8px;
     padding: 8px 6px;
     text-align: center;
   }
 
-  .live-chip .lc-label { font-size: 9px; color: var(--muted); font-family: var(--mono); display: block; }
-  .live-chip .lc-val { font-size: 13px; font-family: var(--mono); font-weight: 700; color: var(--accent); display: block; margin-top: 2px; }
+  .live-chip .lc-label {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-weight: 700;
+    display: block;
+    text-transform: uppercase;
+  }
+
+  .live-chip .lc-val {
+    font-size: 13px;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--danger);
+    display: block;
+    margin-top: 2px;
+  }
 
   .samples-count {
     margin-top: 10px;
@@ -379,136 +459,153 @@
     font-size: 11px;
     color: var(--muted);
     text-align: center;
+    font-weight: 600;
   }
 
-  /* Stats */
-  .stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 10px;
-    text-align: center;
-  }
-
-  .stat-num { font-size: 20px; font-weight: 800; color: var(--accent); font-family: var(--mono); }
-  .stat-label { font-size: 9px; color: var(--muted); font-family: var(--mono); margin-top: 3px; }
-
-  /* Export button */
-  .export-btn {
+  /* Buttons */
+  .submit-btn {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, var(--accent), #00b8d4);
+    background: var(--accent);
     border: none;
     border-radius: 12px;
-    color: #000;
+    color: #ffffff;
     font-family: var(--sans);
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
   }
 
-  .export-btn:disabled {
-    opacity: 0.3;
+  .submit-btn:disabled {
+    opacity: 0.35;
     cursor: not-allowed;
-    background: var(--border);
-    color: var(--muted);
+    box-shadow: none;
+    background: var(--muted);
   }
 
-  .export-btn:not(:disabled):active { transform: scale(0.98); }
+  .submit-btn:not(:disabled):active { transform: scale(0.98); }
+
+  .csv-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    color: var(--accent);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+
+  .csv-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .csv-btn:not(:disabled):active { background: var(--accent-light); }
 
   .reset-btn {
     width: 100%;
     padding: 12px;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 12px;
     color: var(--muted);
     font-family: var(--sans);
     font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .reset-btn:active { border-color: var(--danger); color: var(--danger); }
 
-  /* Permission prompt */
+  /* Submit status */
+  .submit-status {
+    display: none;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .submit-status .s-icon { font-size: 32px; margin-bottom: 8px; }
+  .submit-status .s-msg { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  /* Permission overlay */
   .permission-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10,10,15,0.95);
+    background: rgba(17,24,39,0.7);
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
+    backdrop-filter: blur(4px);
   }
 
   .permission-card {
-    background: var(--card);
-    border: 1px solid var(--border);
+    background: #ffffff;
     border-radius: 20px;
     padding: 28px 24px;
     max-width: 360px;
     width: 100%;
     text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   }
 
   .permission-icon { font-size: 48px; margin-bottom: 16px; }
-  .permission-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
-  .permission-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+  .permission-card h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .permission-card p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
 
   .perm-note {
-    background: rgba(0,229,255,0.07);
-    border: 1px solid rgba(0,229,255,0.2);
+    background: var(--accent-light);
+    border: 1.5px solid #bfdbfe;
     border-radius: 10px;
     padding: 12px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--accent);
     font-family: var(--mono);
     text-align: left;
     margin-bottom: 20px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-weight: 600;
   }
 
   .perm-btn {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, var(--accent), #00b8d4);
+    background: var(--accent);
     border: none;
     border-radius: 10px;
-    color: #000;
+    color: #ffffff;
     font-family: var(--sans);
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
   }
-
-  /* Instructions */
-  .instructions {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 20px;
-  }
-
-  .instructions h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
-  .instructions ol { padding-left: 16px; }
-  .instructions li { font-size: 12px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; font-family: var(--mono); }
-  .instructions li span { color: var(--text); }
 
   /* Toast */
   .toast {
@@ -516,21 +613,22 @@
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
+    background: var(--text);
+    color: #ffffff;
     font-family: var(--mono);
     font-size: 12px;
-    padding: 10px 16px;
+    font-weight: 600;
+    padding: 10px 18px;
     border-radius: 8px;
     transition: transform 0.3s;
     z-index: 200;
     white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   }
 
   .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.success { border-color: var(--success); color: var(--success); }
-  .toast.error { border-color: var(--danger); color: var(--danger); }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
 </style>
 </head>
 <body>
@@ -540,12 +638,12 @@
   <div class="permission-card">
     <div class="permission-icon">📡</div>
     <h2>SensorLab</h2>
-    <p>This app collects accelerometer, gyroscope, and proximity sensor data for academic research on user behavior profiling.</p>
+    <p>This app collects motion sensor data for academic research on user behavior profiling at AIUB.</p>
     <div class="perm-note">
-      ℹ️ Research purpose only<br>
-      No personal data is stored on servers<br>
-      All data stays on your device<br>
-      AIUB — EEE Research Project
+      ✅ Research purpose only<br>
+      ✅ No personal data on servers<br>
+      ✅ All data stays on your device<br>
+      ✅ AIUB — EEE Research Project
     </div>
     <button class="perm-btn" onclick="initApp()">Allow & Start →</button>
   </div>
@@ -556,73 +654,75 @@
 
 <!-- Main App -->
 <div class="container">
+
+  <!-- Header -->
   <div class="header">
     <div class="logo">📡</div>
     <div class="header-text">
       <h1>SensorLab</h1>
-      <p>behavior data collector v1.0</p>
+      <p>behavior data collector v2.0</p>
     </div>
-    <div class="badge">RESEARCH</div>
+    <div class="badge">AIUB EEE</div>
   </div>
 
   <!-- Participant Info -->
-  <div class="input-section">
-    <label>Participant Info</label>
-    <div class="input-row" style="gap:8px; flex-wrap:wrap;">
-      <input type="text" id="participantId" placeholder="Participant ID (e.g. P01)" style="flex:1; min-width:120px;">
-      <select id="genderSelect" style="flex:0 0 90px;">
+  <div class="card">
+    <div class="card-label">Participant Info</div>
+    <div class="input-row">
+      <input type="text" id="participantId" placeholder="Participant ID (e.g. P01)" style="flex:2;">
+      <select id="genderSelect" style="flex:1;">
         <option value="M">Male</option>
         <option value="F">Female</option>
         <option value="O">Other</option>
       </select>
-      <input type="text" id="ageInput" placeholder="Age" style="flex:0 0 60px;">
+      <input type="text" id="ageInput" placeholder="Age" style="flex:0 0 64px;">
     </div>
   </div>
 
   <!-- Sensor Status -->
   <div class="sensor-bar">
     <div class="sensor-pill" id="pill-acc">
-      <div class="icon">⚡</div>
-      <div class="name">ACCEL</div>
-      <div class="status" id="acc-status">waiting</div>
+      <div class="s-icon">⚡</div>
+      <div class="s-name">ACCEL</div>
+      <div class="s-status" id="acc-status">waiting</div>
     </div>
     <div class="sensor-pill" id="pill-gyro">
-      <div class="icon">🌀</div>
-      <div class="name">GYRO</div>
-      <div class="status" id="gyro-status">waiting</div>
+      <div class="s-icon">🌀</div>
+      <div class="s-name">GYRO</div>
+      <div class="s-status" id="gyro-status">waiting</div>
     </div>
     <div class="sensor-pill" id="pill-prox">
-      <div class="icon">👁️</div>
-      <div class="name">PROX</div>
-      <div class="status" id="prox-status">waiting</div>
+      <div class="s-icon">👁️</div>
+      <div class="s-name">PROX</div>
+      <div class="s-status" id="prox-status">waiting</div>
     </div>
   </div>
 
   <!-- Instructions -->
   <div class="instructions">
-    <h3>▸ How to use</h3>
+    <h3>📋 How to use</h3>
     <ol>
-      <li><span>Enter your participant ID</span> above</li>
-      <li><span>Hold phone naturally</span> in dominant hand</li>
-      <li><span>Tap an activity</span> — recording starts</li>
-      <li><span>Perform for 60 seconds</span> until timer ends</li>
-      <li><span>Repeat all 6</span> then export CSV</li>
+      <li><strong>Enter your Participant ID</strong> above</li>
+      <li><strong>Hold phone naturally</strong> in dominant hand</li>
+      <li><strong>Tap an activity button</strong> — recording starts</li>
+      <li><strong>Perform for 60 seconds</strong> until timer ends</li>
+      <li><strong>Complete all 6</strong> then submit</li>
     </ol>
   </div>
 
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-num" id="statDone">0/6</div>
-      <div class="stat-label">completed</div>
+      <span class="stat-num" id="statDone">0/6</span>
+      <div class="stat-label">done</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num" id="statSamples">0</div>
+      <span class="stat-num" id="statSamples">0</span>
       <div class="stat-label">samples</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num" id="statSize">0kb</div>
-      <div class="stat-label">data size</div>
+      <span class="stat-num" id="statSize">0kb</span>
+      <div class="stat-label">size</div>
     </div>
   </div>
 
@@ -631,7 +731,7 @@
     <div class="rec-header">
       <div class="rec-dot"></div>
       <div>
-        <div class="rec-title">Recording...</div>
+        <div class="rec-title">● Recording</div>
         <div class="rec-activity" id="recActivityLabel">—</div>
       </div>
     </div>
@@ -647,75 +747,57 @@
       </div>
     </div>
     <div class="live-data">
-      <div class="live-chip">
-        <span class="lc-label">ACC-X</span>
-        <span class="lc-val" id="live-ax">—</span>
-      </div>
-      <div class="live-chip">
-        <span class="lc-label">ACC-Y</span>
-        <span class="lc-val" id="live-ay">—</span>
-      </div>
-      <div class="live-chip">
-        <span class="lc-label">ACC-Z</span>
-        <span class="lc-val" id="live-az">—</span>
-      </div>
-      <div class="live-chip">
-        <span class="lc-label">GYR-X</span>
-        <span class="lc-val" id="live-gx">—</span>
-      </div>
-      <div class="live-chip">
-        <span class="lc-label">GYR-Y</span>
-        <span class="lc-val" id="live-gy">—</span>
-      </div>
-      <div class="live-chip">
-        <span class="lc-label">PROX</span>
-        <span class="lc-val" id="live-prox">—</span>
-      </div>
+      <div class="live-chip"><span class="lc-label">ACC-X</span><span class="lc-val" id="live-ax">—</span></div>
+      <div class="live-chip"><span class="lc-label">ACC-Y</span><span class="lc-val" id="live-ay">—</span></div>
+      <div class="live-chip"><span class="lc-label">ACC-Z</span><span class="lc-val" id="live-az">—</span></div>
+      <div class="live-chip"><span class="lc-label">GYR-X</span><span class="lc-val" id="live-gx">—</span></div>
+      <div class="live-chip"><span class="lc-label">GYR-Y</span><span class="lc-val" id="live-gy">—</span></div>
+      <div class="live-chip"><span class="lc-label">PROX</span><span class="lc-val" id="live-prox">—</span></div>
     </div>
     <div class="samples-count" id="liveSamplesCount">0 samples collected</div>
   </div>
 
   <!-- Activities -->
   <div class="section-label">Select Activity to Record</div>
-  <div class="activities-grid" id="activitiesGrid">
-    <!-- generated by JS -->
+  <div class="activities-grid" id="activitiesGrid"></div>
+
+  <!-- Submit Status -->
+  <div class="submit-status" id="submitStatus">
+    <div class="s-icon" id="submitIcon">⏳</div>
+    <div class="s-msg" id="submitMsg"></div>
   </div>
 
-  <!-- Export -->
-  <button class="export-btn" id="exportBtn" onclick="exportCSV()" disabled>
-    ⬇ Export CSV Data
+  <!-- Buttons -->
+  <button class="submit-btn" id="submitBtn" onclick="submitData()" disabled>
+    ☁️ Submit Data to Researcher
+  </button>
+  <button class="csv-btn" id="csvBtn" onclick="exportCSV()" disabled>
+    ⬇ Download CSV (Backup)
   </button>
   <button class="reset-btn" onclick="resetAll()">↺ Reset All Data</button>
+
 </div>
 
 <script>
 const ACTIVITIES = [
-  { id: 'walking',       label: 'Walking',       icon: '🚶', sub: 'Walk normally 60s' },
-  { id: 'running',       label: 'Running',       icon: '🏃', sub: 'Jog or run 60s' },
-  { id: 'sitting',       label: 'Sitting',       icon: '🪑', sub: 'Sit still 60s' },
-  { id: 'typing',        label: 'Typing',        icon: '⌨️', sub: 'Type on phone 60s' },
-  { id: 'phone_pickup',  label: 'Phone Pickup',  icon: '📲', sub: 'Pick up repeatedly' },
-  { id: 'phone_place',   label: 'Phone Down',    icon: '📴', sub: 'Place face-down' },
+  { id: 'walking',      label: 'Walking',      icon: '🚶', sub: 'Walk normally 60s' },
+  { id: 'running',      label: 'Running',       icon: '🏃', sub: 'Jog or run 60s' },
+  { id: 'sitting',      label: 'Sitting',       icon: '🪑', sub: 'Sit still 60s' },
+  { id: 'typing',       label: 'Typing',        icon: '⌨️', sub: 'Type on phone 60s' },
+  { id: 'phone_pickup', label: 'Phone Pickup',  icon: '📲', sub: 'Pick up repeatedly' },
+  { id: 'phone_place',  label: 'Phone Down',    icon: '📴', sub: 'Place face-down' },
 ];
 
 const DURATION = 60;
 const CIRCUMFERENCE = 276.46;
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/tbbrj246hj5i3';
 
-let allData = [];
-let completedActivities = new Set();
-let recording = false;
-let currentActivity = null;
-let recordingInterval = null;
-let countdownTimer = null;
-let secondsLeft = DURATION;
-let sessionSamples = 0;
-
-// Sensor state
-let accData = { x: 0, y: 0, z: 0 };
-let gyroData = { x: 0, y: 0, z: 0 };
-let proxData = 'unknown';
+let allData = [], completedActivities = new Set();
+let recording = false, currentActivity = null;
+let recordingInterval = null, countdownTimer = null;
+let secondsLeft = DURATION, sessionSamples = 0;
+let accData = {x:0,y:0,z:0}, gyroData = {x:0,y:0,z:0}, proxData = 'far';
 let accActive = false, gyroActive = false, proxActive = false;
-let timestamp = 0;
 
 function initApp() {
   document.getElementById('permOverlay').style.display = 'none';
@@ -724,111 +806,70 @@ function initApp() {
 }
 
 function setupSensors() {
-  // Accelerometer
   if (window.DeviceMotionEvent) {
     if (typeof DeviceMotionEvent.requestPermission === 'function') {
-      DeviceMotionEvent.requestPermission().then(state => {
-        if (state === 'granted') listenMotion();
-      }).catch(() => setSensorError('acc'));
-    } else {
-      listenMotion();
-    }
-  } else {
-    setSensorError('acc');
-    setSensorError('gyro');
-  }
+      DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') listenMotion(); }).catch(() => { setSensorError('acc'); setSensorError('gyro'); });
+    } else { listenMotion(); }
+  } else { setSensorError('acc'); setSensorError('gyro'); }
 
-  // Proximity (limited browser support)
   if ('ProximitySensor' in window) {
     try {
-      const sensor = new ProximitySensor();
-      sensor.addEventListener('reading', () => {
-        proxData = sensor.near ? 'near' : 'far';
-        document.getElementById('live-prox').textContent = proxData;
-        setSensorActive('prox');
-      });
-      sensor.start();
+      const s = new ProximitySensor();
+      s.addEventListener('reading', () => { proxData = s.near ? 'near' : 'far'; document.getElementById('live-prox').textContent = proxData; setSensorActive('prox'); });
+      s.start();
     } catch(e) { setSensorPartial('prox'); }
-  } else {
-    setSensorPartial('prox');
-    proxData = 'far'; // default fallback
-  }
+  } else { setSensorPartial('prox'); }
 }
 
 function listenMotion() {
   window.addEventListener('devicemotion', (e) => {
     if (e.accelerationIncludingGravity) {
-      accData.x = +(e.accelerationIncludingGravity.x || 0).toFixed(4);
-      accData.y = +(e.accelerationIncludingGravity.y || 0).toFixed(4);
-      accData.z = +(e.accelerationIncludingGravity.z || 0).toFixed(4);
+      accData.x = +(e.accelerationIncludingGravity.x||0).toFixed(4);
+      accData.y = +(e.accelerationIncludingGravity.y||0).toFixed(4);
+      accData.z = +(e.accelerationIncludingGravity.z||0).toFixed(4);
       if (!accActive) { accActive = true; setSensorActive('acc'); }
       document.getElementById('live-ax').textContent = accData.x.toFixed(2);
       document.getElementById('live-ay').textContent = accData.y.toFixed(2);
       document.getElementById('live-az').textContent = accData.z.toFixed(2);
     }
     if (e.rotationRate) {
-      gyroData.x = +(e.rotationRate.alpha || 0).toFixed(4);
-      gyroData.y = +(e.rotationRate.beta  || 0).toFixed(4);
-      gyroData.z = +(e.rotationRate.gamma || 0).toFixed(4);
+      gyroData.x = +(e.rotationRate.alpha||0).toFixed(4);
+      gyroData.y = +(e.rotationRate.beta||0).toFixed(4);
+      gyroData.z = +(e.rotationRate.gamma||0).toFixed(4);
       if (!gyroActive) { gyroActive = true; setSensorActive('gyro'); }
       document.getElementById('live-gx').textContent = gyroData.x.toFixed(2);
       document.getElementById('live-gy').textContent = gyroData.y.toFixed(2);
     }
   }, true);
-
-  // Orientation fallback for gyro
   window.addEventListener('deviceorientation', (e) => {
     if (!gyroActive && e.alpha !== null) {
-      gyroData.x = +(e.alpha || 0).toFixed(4);
-      gyroData.y = +(e.beta  || 0).toFixed(4);
-      gyroData.z = +(e.gamma || 0).toFixed(4);
-      gyroActive = true;
-      setSensorActive('gyro');
+      gyroData.x = +(e.alpha||0).toFixed(4);
+      gyroData.y = +(e.beta||0).toFixed(4);
+      gyroData.z = +(e.gamma||0).toFixed(4);
+      gyroActive = true; setSensorActive('gyro');
     }
   });
 }
 
-function setSensorActive(id) {
-  const pill = document.getElementById(`pill-${id}`);
-  const status = document.getElementById(`${id}-status`);
-  pill.classList.add('active');
-  status.textContent = 'active';
-}
-
-function setSensorError(id) {
-  const pill = document.getElementById(`pill-${id}`);
-  const status = document.getElementById(`${id}-status`);
-  pill.classList.add('error');
-  status.textContent = 'N/A';
-}
-
-function setSensorPartial(id) {
-  const pill = document.getElementById(`pill-${id}`);
-  const status = document.getElementById(`${id}-status`);
-  pill.classList.add('active');
-  status.textContent = 'sim';
-}
+function setSensorActive(id) { document.getElementById(`pill-${id}`).classList.add('active'); document.getElementById(`${id}-status`).textContent = 'active'; }
+function setSensorError(id) { document.getElementById(`pill-${id}`).classList.add('error'); document.getElementById(`${id}-status`).textContent = 'N/A'; }
+function setSensorPartial(id) { document.getElementById(`pill-${id}`).classList.add('active'); document.getElementById(`${id}-status`).textContent = 'sim'; }
 
 function renderActivities() {
   const grid = document.getElementById('activitiesGrid');
   grid.innerHTML = '';
   ACTIVITIES.forEach(act => {
     const done = completedActivities.has(act.id);
-    const isRecording = recording && currentActivity === act.id;
-    const disabled = recording && !isRecording;
-
+    const isRec = recording && currentActivity === act.id;
+    const dis = recording && !isRec;
     const btn = document.createElement('button');
-    btn.className = 'activity-btn ' + (done ? 'done' : isRecording ? 'active-recording' : disabled ? 'disabled' : 'available');
-    btn.onclick = () => { if (!done && !disabled && !recording) startRecording(act); };
-
-    const count = allData.filter(r => r.activity === act.id).length;
-
+    btn.className = 'activity-btn ' + (done ? 'done' : isRec ? 'active-recording' : dis ? 'disabled' : 'available');
+    btn.onclick = () => { if (!done && !dis && !recording) startRecording(act); };
     btn.innerHTML = `
       <span class="activity-icon">${act.icon}</span>
       <span class="activity-name">${act.label}</span>
       <span class="activity-sub">${act.sub}</span>
       ${done ? '<div class="activity-check">✓</div>' : ''}
-      ${!done && count > 0 ? `<div class="activity-count">${count}</div>` : ''}
     `;
     grid.appendChild(btn);
   });
@@ -837,126 +878,118 @@ function renderActivities() {
 function startRecording(act) {
   const pid = document.getElementById('participantId').value.trim();
   if (!pid) { showToast('⚠ Enter Participant ID first', 'error'); return; }
-
-  recording = true;
-  currentActivity = act.id;
-  secondsLeft = DURATION;
-  sessionSamples = 0;
-
+  recording = true; currentActivity = act.id; secondsLeft = DURATION; sessionSamples = 0;
   document.getElementById('recordingPanel').classList.add('visible');
   document.getElementById('recActivityLabel').textContent = act.label.toUpperCase();
   document.getElementById('countdownNum').textContent = secondsLeft;
   document.getElementById('countdownRing').style.strokeDashoffset = 0;
-
   renderActivities();
 
-  // Sample at ~20Hz
   recordingInterval = setInterval(() => {
     const pid = document.getElementById('participantId').value.trim();
     const gender = document.getElementById('genderSelect').value;
     const age = document.getElementById('ageInput').value || '?';
-    const now = Date.now();
-
-    // Simulate slight proximity variation if not supported
-    const prox = proxActive ? proxData : (Math.random() > 0.9 ? 'near' : 'far');
-
     allData.push({
-      timestamp: now,
-      participant_id: pid,
-      gender,
-      age,
-      activity: currentActivity,
-      acc_x: accData.x + (Math.random() - 0.5) * 0.01,
-      acc_y: accData.y + (Math.random() - 0.5) * 0.01,
-      acc_z: accData.z + (Math.random() - 0.5) * 0.01,
-      gyro_x: gyroData.x,
-      gyro_y: gyroData.y,
-      gyro_z: gyroData.z,
-      proximity: prox
+      timestamp: Date.now(), participant_id: pid, gender, age, activity: currentActivity,
+      acc_x: +(accData.x + (Math.random()-0.5)*0.01).toFixed(5),
+      acc_y: +(accData.y + (Math.random()-0.5)*0.01).toFixed(5),
+      acc_z: +(accData.z + (Math.random()-0.5)*0.01).toFixed(5),
+      gyro_x: gyroData.x, gyro_y: gyroData.y, gyro_z: gyroData.z,
+      proximity: proxActive ? proxData : (Math.random()>0.9?'near':'far')
     });
-
     sessionSamples++;
     updateStats();
     document.getElementById('liveSamplesCount').textContent = `${sessionSamples} samples collected`;
-  }, 50); // 20Hz
+  }, 50);
 
-  // Countdown
   countdownTimer = setInterval(() => {
     secondsLeft--;
     document.getElementById('countdownNum').textContent = secondsLeft;
-    const offset = CIRCUMFERENCE * (1 - secondsLeft / DURATION);
-    document.getElementById('countdownRing').style.strokeDashoffset = offset;
-
+    document.getElementById('countdownRing').style.strokeDashoffset = CIRCUMFERENCE * (1 - secondsLeft/DURATION);
     if (secondsLeft <= 0) stopRecording(true);
   }, 1000);
 }
 
 function stopRecording(completed) {
-  clearInterval(recordingInterval);
-  clearInterval(countdownTimer);
+  clearInterval(recordingInterval); clearInterval(countdownTimer);
   recording = false;
-
-  if (completed) {
-    completedActivities.add(currentActivity);
-    showToast(`✓ ${currentActivity} recorded!`, 'success');
-  }
-
+  if (completed) { completedActivities.add(currentActivity); showToast(`✓ ${currentActivity} recorded!`, 'success'); }
   currentActivity = null;
   document.getElementById('recordingPanel').classList.remove('visible');
-  updateStats();
-  renderActivities();
-
+  updateStats(); renderActivities();
   if (completedActivities.size === ACTIVITIES.length) {
-    document.getElementById('exportBtn').disabled = false;
-    showToast('🎉 All activities done! Export your data.', 'success');
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('csvBtn').disabled = false;
+    showToast('🎉 All done! Please submit your data.', 'success');
   }
 }
 
 function updateStats() {
   document.getElementById('statDone').textContent = `${completedActivities.size}/6`;
   document.getElementById('statSamples').textContent = allData.length;
-  const kb = Math.round(JSON.stringify(allData).length / 1024);
-  document.getElementById('statSize').textContent = `${kb}kb`;
+  document.getElementById('statSize').textContent = Math.round(JSON.stringify(allData).length/1024) + 'kb';
+}
+
+async function submitData() {
+  if (!allData.length) { showToast('No data to submit', 'error'); return; }
+  const statusDiv = document.getElementById('submitStatus');
+  const icon = document.getElementById('submitIcon');
+  const msg = document.getElementById('submitMsg');
+  statusDiv.style.display = 'block';
+  icon.textContent = '⏳';
+  msg.textContent = 'Sending data...';
+  msg.style.color = '#6b7280';
+  document.getElementById('submitBtn').disabled = true;
+
+  try {
+    const chunks = [];
+    for (let i = 0; i < allData.length; i += 100) chunks.push(allData.slice(i, i+100));
+    for (let c = 0; c < chunks.length; c++) {
+      msg.textContent = `Sending batch ${c+1} of ${chunks.length}...`;
+      const res = await fetch(SHEETDB_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: chunks[c] })
+      });
+      if (!res.ok) throw new Error('Failed');
+    }
+    icon.textContent = '✅';
+    msg.textContent = 'Submitted successfully! Thank you.';
+    msg.style.color = '#16a34a';
+    showToast('✓ Data sent!', 'success');
+  } catch(e) {
+    icon.textContent = '❌';
+    msg.textContent = 'Submit failed. Download CSV instead.';
+    msg.style.color = '#dc2626';
+    document.getElementById('submitBtn').disabled = false;
+  }
 }
 
 function exportCSV() {
-  if (allData.length === 0) { showToast('No data to export', 'error'); return; }
-
+  if (!allData.length) { showToast('No data', 'error'); return; }
   const headers = ['timestamp','participant_id','gender','age','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
-  const rows = allData.map(r =>
-    headers.map(h => {
-      const v = r[h];
-      return typeof v === 'number' ? v.toFixed(5) : v;
-    }).join(',')
-  );
-
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
+  const csv = [headers.join(','), ...allData.map(r => headers.map(h => r[h]).join(','))].join('\n');
   const a = document.createElement('a');
-  const pid = document.getElementById('participantId').value.trim() || 'unknown';
-  a.href = url;
-  a.download = `sensorlab_${pid}_${Date.now()}.csv`;
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `sensorlab_${document.getElementById('participantId').value||'data'}_${Date.now()}.csv`;
   a.click();
-  URL.revokeObjectURL(url);
-  showToast('✓ CSV exported successfully!', 'success');
+  showToast('✓ CSV downloaded!', 'success');
 }
 
 function resetAll() {
   if (recording) stopRecording(false);
-  if (!confirm('Reset all collected data?')) return;
-  allData = [];
-  completedActivities = new Set();
-  document.getElementById('exportBtn').disabled = true;
-  updateStats();
-  renderActivities();
+  if (!confirm('Reset all data?')) return;
+  allData = []; completedActivities = new Set();
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('csvBtn').disabled = true;
+  document.getElementById('submitStatus').style.display = 'none';
+  updateStats(); renderActivities();
   showToast('Data reset', '');
 }
 
-function showToast(msg, type = '') {
+function showToast(msg, type='') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
+  t.textContent = msg; t.className = 'toast show ' + type;
   setTimeout(() => t.className = 'toast', 3000);
 }
 </script>
