@@ -381,12 +381,12 @@ async function submitData(){
   for(let c=0;c<chunks.length;c++){
     msg.textContent='Sending '+(c+1)+'/'+chunks.length+' batches...';
     try{
-      const res=await fetch(SHEETDB,{
+      await fetch(SHEETDB,{
         method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},
         body:JSON.stringify({data:chunks[c]})
       });
-      if(!res.ok){failed=true;break;}
       sent+=chunks[c].length;
     }catch(err){failed=true;break;}
   }
