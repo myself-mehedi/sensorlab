@@ -375,29 +375,42 @@ async function submitData(){
   msg.textContent='Connecting...';
   msg.style.color='#6b7280';
   document.getElementById('submitBtn').disabled=true;
-  const chunks=[];
-  for(let i=0;i<allData.length;i+=50) chunks.push(allData.slice(i,i+50));
-  let failed=false,sent=0;
-  for(let c=0;c<chunks.length;c++){
-    msg.textContent='Sending '+(c+1)+'/'+chunks.length+' batches...';
+
+  let sent=0, failed=false;
+  const total=allData.length;
+
+  for(let i=0;i<allData.length;i++){
+    const r=allData[i];
+    msg.textContent='Sending row '+(i+1)+' of '+total+'...';
     try{
-      await fetch(SHEETDB,{
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({data:chunks[c]})
+      const params=new URLSearchParams({
+        timestamp:r.timestamp,
+        participant_id:r.participant_id,
+        gender:r.gender,
+        age:r.age,
+        activity:r.activity,
+        acc_x:r.acc_x,
+        acc_y:r.acc_y,
+        acc_z:r.acc_z,
+        gyro_x:r.gyro_x,
+        gyro_y:r.gyro_y,
+        gyro_z:r.gyro_z,
+        proximity:r.proximity
       });
-      sent+=chunks[c].length;
+      const res=await fetch(SHEETDB+'?'+params.toString(),{method:'GET',mode:'cors'});
+      if(!res.ok){failed=true;break;}
+      sent++;
     }catch(err){failed=true;break;}
   }
-  if(!failed){
+
+  if(sent>0 && !failed){
     icon.textContent='✅';
-    msg.textContent='Success! '+sent+' rows sent. Thank you!';
+    msg.textContent='Success! '+sent+' rows sent to researcher!';
     msg.style.color='#16a34a';
     showToast('Data submitted!','success');
   } else {
     icon.textContent='⚠️';
-    msg.textContent='Network error — downloading CSV backup...';
+    msg.textContent='Failed after '+sent+' rows. Downloading CSV backup...';
     msg.style.color='#d97706';
     document.getElementById('submitBtn').disabled=false;
     setTimeout(()=>exportCSV(),800);
