@@ -253,7 +253,7 @@ const ACTIVITIES = [
   { id:'phone_place',  label:'Phone Down',   icon:'📴', sub:'Place face-down' },
 ];
 const DURATION=60, CIRC=276.46;
-const SHEETDB='https://sheetdb.io/api/v1/tbbrj246hj5i3';
+const SHEETDB='https://script.google.com/macros/s/AKfycbwfevxTAtgFmF8mk5M4JEIvqjercb5IVyPKk6AAVdExYSep272Z_50zIlc0FRKVOCawSQ/exec';
 let allData=[],done=new Set(),recording=false,curAct=null;
 let recInt=null,cntInt=null,secLeft=DURATION,sessSamples=0;
 let acc={x:0,y:0,z:0},gyro={x:0,y:0,z:0},prox='far';
@@ -366,23 +366,41 @@ function updateStats(){
 }
 
 async function submitData(){
-  if(!allData.length){showToast('No data','error');return;}
+  if(!allData.length){showToast('No data to submit','error');return;}
   const sd=document.getElementById('submitStatus');
   const icon=document.getElementById('submitIcon');
   const msg=document.getElementById('submitMsg');
-  sd.style.display='block';icon.textContent='⏳';msg.textContent='Sending data...';msg.style.color='#6b7280';
+  sd.style.display='block';
+  icon.textContent='⏳';
+  msg.textContent='Connecting...';
+  msg.style.color='#6b7280';
   document.getElementById('submitBtn').disabled=true;
-  try{
-    for(let i=0;i<allData.length;i+=100){
-      msg.textContent='Sending batch '+(Math.floor(i/100)+1)+' of '+Math.ceil(allData.length/100)+'...';
-      const res=await fetch(SHEETDB,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:allData.slice(i,i+100)})});
-      if(!res.ok)throw new Error('fail');
-    }
-    icon.textContent='✅';msg.textContent='Submitted! Thank you.';msg.style.color='#16a34a';
-    showToast('✓ Data sent to researcher!','success');
-  }catch(e){
-    icon.textContent='❌';msg.textContent='Submit failed. Please download CSV.';msg.style.color='#dc2626';
+  const chunks=[];
+  for(let i=0;i<allData.length;i+=50) chunks.push(allData.slice(i,i+50));
+  let failed=false,sent=0;
+  for(let c=0;c<chunks.length;c++){
+    msg.textContent='Sending '+(c+1)+'/'+chunks.length+' batches...';
+    try{
+      const res=await fetch(SHEETDB,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({data:chunks[c]})
+      });
+      if(!res.ok){failed=true;break;}
+      sent+=chunks[c].length;
+    }catch(err){failed=true;break;}
+  }
+  if(!failed){
+    icon.textContent='✅';
+    msg.textContent='Success! '+sent+' rows sent. Thank you!';
+    msg.style.color='#16a34a';
+    showToast('Data submitted!','success');
+  } else {
+    icon.textContent='⚠️';
+    msg.textContent='Network error — downloading CSV backup...';
+    msg.style.color='#d97706';
     document.getElementById('submitBtn').disabled=false;
+    setTimeout(()=>exportCSV(),800);
   }
 }
 
