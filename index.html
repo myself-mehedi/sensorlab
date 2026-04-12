@@ -372,45 +372,24 @@ async function submitData(){
   const msg=document.getElementById('submitMsg');
   sd.style.display='block';
   icon.textContent='⏳';
-  msg.textContent='Connecting...';
+  msg.textContent='Uploading all data in one batch...';
   msg.style.color='#6b7280';
   document.getElementById('submitBtn').disabled=true;
 
-  let sent=0, failed=false;
-  const total=allData.length;
-
-  for(let i=0;i<allData.length;i++){
-    const r=allData[i];
-    msg.textContent='Sending row '+(i+1)+' of '+total+'...';
-    try{
-      const params=new URLSearchParams({
-        timestamp:r.timestamp,
-        participant_id:r.participant_id,
-        gender:r.gender,
-        age:r.age,
-        activity:r.activity,
-        acc_x:r.acc_x,
-        acc_y:r.acc_y,
-        acc_z:r.acc_z,
-        gyro_x:r.gyro_x,
-        gyro_y:r.gyro_y,
-        gyro_z:r.gyro_z,
-        proximity:r.proximity
-      });
-      const res=await fetch(SHEETDB+'?'+params.toString(),{method:'GET',mode:'cors'});
-      if(!res.ok){failed=true;break;}
-      sent++;
-    }catch(err){failed=true;break;}
-  }
-
-  if(sent>0 && !failed){
+  try{
+    await fetch(SHEETDB,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(allData)
+    });
     icon.textContent='✅';
-    msg.textContent='Success! '+sent+' rows sent to researcher!';
+    msg.textContent='Success! All '+allData.length+' rows submitted!';
     msg.style.color='#16a34a';
-    showToast('Data submitted!','success');
-  } else {
+    showToast('Data submitted successfully!','success');
+  }catch(err){
     icon.textContent='⚠️';
-    msg.textContent='Failed after '+sent+' rows. Downloading CSV backup...';
+    msg.textContent='Submission failed. Please download CSV backup.';
     msg.style.color='#d97706';
     document.getElementById('submitBtn').disabled=false;
     setTimeout(()=>exportCSV(),800);
