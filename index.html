@@ -176,6 +176,22 @@
       </select>
       <input type="text" id="ageInput" placeholder="Age" style="flex:0 0 64px;">
     </div>
+    <div style="margin-top:8px;">
+    <select id="brandSelect" style="width:100%;" onchange="toggleOtherBrand(this)">
+      <option value="">-- Select Phone Brand --</option>
+      <option value="Samsung">Samsung</option>
+      <option value="Xiaomi">Xiaomi</option>
+      <option value="Realme">Realme</option>
+      <option value="OPPO">OPPO</option>
+      <option value="Vivo">Vivo</option>
+      <option value="iPhone">iPhone</option>
+      <option value="OnePlus">OnePlus</option>
+      <option value="Huawei">Huawei</option>
+      <option value="Nokia">Nokia</option>
+      <option value="Other">Other</option>
+    </select>
+    <input type="text" id="brandOther" placeholder="Type your phone brand..." style="width:100%;margin-top:8px;display:none;">
+    </div>
   </div>
 
   <div class="sensor-bar">
@@ -328,7 +344,9 @@ function startRec(act){
     const pid=document.getElementById('participantId').value.trim();
     const gender=document.getElementById('genderSelect').value;
     const age=document.getElementById('ageInput').value||'?';
-    allData.push({timestamp:Date.now(),participant_id:pid,gender,age,activity:curAct,
+    const brandSel=document.getElementById('brandSelect').value;
+    const brand=brandSel==='Other'?(document.getElementById('brandOther').value||'Other'):brandSel||'Unknown';
+    allData.push({timestamp:Date.now(),participant_id:pid,gender,age,brand,activity:curAct,
       acc_x:+(acc.x+(Math.random()-0.5)*0.01).toFixed(5),
       acc_y:+(acc.y+(Math.random()-0.5)*0.01).toFixed(5),
       acc_z:+(acc.z+(Math.random()-0.5)*0.01).toFixed(5),
@@ -398,7 +416,7 @@ async function submitData(){
 
 function exportCSV(){
   if(!allData.length){showToast('No data','error');return;}
-  const h=['timestamp','participant_id','gender','age','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
+  const h=['timestamp','participant_id','gender','age','brand','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
   const csv=[h.join(','),...allData.map(r=>h.map(k=>r[k]).join(','))].join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -416,6 +434,17 @@ function resetAll(){
   document.getElementById('submitStatus').style.display='none';
   updateStats();renderActivities();
   showToast('Data reset','');
+}
+
+function toggleOtherBrand(sel){
+  const otherInput=document.getElementById('brandOther');
+  if(sel.value==='Other'){
+    otherInput.style.display='block';
+    otherInput.focus();
+  } else {
+    otherInput.style.display='none';
+    otherInput.value='';
+  }
 }
 
 function showToast(msg,type=''){
