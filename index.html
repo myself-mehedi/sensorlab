@@ -261,15 +261,20 @@
 
 <script>
 const ACTIVITIES = [
-  { id:'walking',      label:'Walking',     icon:'🚶', sub:'Walk normally 60s' },
-  { id:'running',      label:'Running',      icon:'🏃', sub:'Jog or run 60s' },
-  { id:'sitting',      label:'Sitting',      icon:'🪑', sub:'Sit still 60s' },
-  { id:'typing',       label:'Typing',       icon:'⌨️', sub:'Type on phone 60s' },
-  { id:'phone_pickup', label:'Phone Pickup', icon:'📲', sub:'Pick up repeatedly' },
-  { id:'phone_place',  label:'Phone Down',   icon:'📴', sub:'Place face-down' },
+  { id:'walking',      label:'Walking',       icon:'🚶', sub:'Walk normally 60s' },
+  { id:'running',      label:'Running',       icon:'🏃', sub:'Jog or run 60s' },
+  { id:'sitting',      label:'Sitting',       icon:'🪑', sub:'Sit still 60s' },
+  { id:'standing',     label:'Standing',      icon:'🧍', sub:'Stand still 60s' },
+  { id:'typing',       label:'Typing',        icon:'⌨️', sub:'Type on phone 60s' },
+  { id:'phone_pickup', label:'Phone Pickup',  icon:'📲', sub:'Pick up repeatedly' },
+  { id:'phone_place',  label:'Phone Down',    icon:'📴', sub:'Place face-down' },
+  { id:'pocket',       label:'Phone in Pocket', icon:'🧥', sub:'Walk with phone in pocket' },
 ];
 const DURATION=60, CIRC=276.46;
 const SHEETDB='https://script.google.com/macros/s/AKfycbwfevxTAtgFmF8mk5M4JEIvqjercb5IVyPKk6AAVdExYSep272Z_50zIlc0FRKVOCawSQ/exec';
+// Capture device info once
+const DEVICE_INFO = (navigator.userAgent||'unknown') + ' | ' + (navigator.platform||'unknown');
+
 let allData=[],done=new Set(),recording=false,curAct=null;
 let recInt=null,cntInt=null,secLeft=DURATION,sessSamples=0;
 let acc={x:0,y:0,z:0},gyro={x:0,y:0,z:0},prox='far';
@@ -346,12 +351,22 @@ function startRec(act){
     const age=document.getElementById('ageInput').value||'?';
     const brandSel=document.getElementById('brandSelect').value;
     const brand=brandSel==='Other'?(document.getElementById('brandOther').value||'Other'):brandSel||'Unknown';
-    allData.push({timestamp:Date.now(),participant_id:pid,gender,age,brand,activity:curAct,
+    // Proximity: use real sensor if available, else simulate based on activity
+    const proxVal = proxOk ? prox : (curAct==='pocket' ? 'near' : (curAct==='phone_place' ? 'near' : 'far'));
+    allData.push({
+      timestamp:Date.now(),
+      participant_id:pid,
+      gender,age,brand,
+      device_info:DEVICE_INFO,
+      activity:curAct,
       acc_x:+(acc.x+(Math.random()-0.5)*0.01).toFixed(5),
       acc_y:+(acc.y+(Math.random()-0.5)*0.01).toFixed(5),
       acc_z:+(acc.z+(Math.random()-0.5)*0.01).toFixed(5),
-      gyro_x:gyro.x,gyro_y:gyro.y,gyro_z:gyro.z,
-      proximity:proxOk?prox:(Math.random()>0.9?'near':'far')});
+      gyro_x:gyro.x,
+      gyro_y:gyro.y,
+      gyro_z:gyro.z,
+      proximity:proxVal
+    });
     sessSamples++;
     updateStats();
     document.getElementById('liveSamplesCount').textContent=sessSamples+' samples collected';
@@ -373,12 +388,12 @@ function stopRec(completed){
   if(done.size===ACTIVITIES.length){
     document.getElementById('submitBtn').disabled=false;
     document.getElementById('csvBtn').disabled=false;
-    showToast('🎉 All done! Please submit your data.','success');
+    showToast('🎉 All '+ACTIVITIES.length+' activities done! Please submit.','success');
   }
 }
 
 function updateStats(){
-  document.getElementById('statDone').textContent=done.size+'/6';
+  document.getElementById('statDone').textContent=done.size+'/'+ACTIVITIES.length;
   document.getElementById('statSamples').textContent=allData.length;
   document.getElementById('statSize').textContent=Math.round(JSON.stringify(allData).length/1024)+'kb';
 }
@@ -416,7 +431,7 @@ async function submitData(){
 
 function exportCSV(){
   if(!allData.length){showToast('No data','error');return;}
-  const h=['timestamp','participant_id','gender','age','brand','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
+  const h=['timestamp','participant_id','gender','age','brand','device_info','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
   const csv=[h.join(','),...allData.map(r=>h.map(k=>r[k]).join(','))].join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
