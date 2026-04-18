@@ -265,6 +265,9 @@
       <div class="live-chip"><span class="lc-label">GYR-X</span><span class="lc-val" id="live-gx">—</span></div>
       <div class="live-chip"><span class="lc-label">GYR-Y</span><span class="lc-val" id="live-gy">—</span></div>
       <div class="live-chip"><span class="lc-label">PROX</span><span class="lc-val" id="live-prox">—</span></div>
+      <div class="live-chip"><span class="lc-label">L-ACC-X</span><span class="lc-val" id="live-lx">—</span></div>
+      <div class="live-chip"><span class="lc-label">BETA°</span><span class="lc-val" id="live-beta">—</span></div>
+      <div class="live-chip"><span class="lc-label">GAMMA°</span><span class="lc-val" id="live-gamma">—</span></div>
     </div>
     <div class="samples-count" id="liveSamplesCount">0 samples collected</div>
   </div>
@@ -314,7 +317,9 @@ const DEVICE_INFO = (navigator.userAgent||'unknown') + ' | ' + (navigator.platfo
 let allData=[],done=new Set(),recording=false,curAct=null;
 let recInt=null,cntInt=null,secLeft=DURATION,sessSamples=0;
 let acc={x:0,y:0,z:0},gyro={x:0,y:0,z:0},prox='far';
-let accOk=false,gyroOk=false,proxOk=false;
+let accL={x:0,y:0,z:0}; // linear acceleration (gravity-free)
+let orient={alpha:0,beta:0,gamma:0}; // device orientation
+let accOk=false,gyroOk=false,proxOk=false,orientOk=false;
 
 function initApp(){
   document.getElementById('permOverlay').style.display='none';
@@ -350,9 +355,22 @@ function listenMotion(){
       document.getElementById('live-gx').textContent=gyro.x.toFixed(2);
       document.getElementById('live-gy').textContent=gyro.y.toFixed(2);
     }
+    // Linear acceleration (gravity-free)
+    if(e.acceleration){
+      accL.x=+(e.acceleration.x||0).toFixed(4);
+      accL.y=+(e.acceleration.y||0).toFixed(4);
+      accL.z=+(e.acceleration.z||0).toFixed(4);
+    }
   },true);
+  // Orientation listener
   window.addEventListener('deviceorientation',e=>{
-    if(!gyroOk&&e.alpha!==null){gyro.x=+(e.alpha||0).toFixed(4);gyro.y=+(e.beta||0).toFixed(4);gyro.z=+(e.gamma||0).toFixed(4);gyroOk=true;setOk('gyro');}
+    if(e.alpha!==null){
+      orient.alpha=+(e.alpha||0).toFixed(4);
+      orient.beta=+(e.beta||0).toFixed(4);
+      orient.gamma=+(e.gamma||0).toFixed(4);
+      if(!orientOk){orientOk=true;}
+      if(!gyroOk){gyro.x=orient.alpha;gyro.y=orient.beta;gyro.z=orient.gamma;gyroOk=true;setOk('gyro');}
+    }
   });
 }
 function setOk(id){document.getElementById('pill-'+id).classList.add('active');document.getElementById(id+'-status').textContent='active';}
@@ -420,9 +438,9 @@ function startRec(act){
       acc_x:+(acc.x+(Math.random()-0.5)*0.01).toFixed(5),
       acc_y:+(acc.y+(Math.random()-0.5)*0.01).toFixed(5),
       acc_z:+(acc.z+(Math.random()-0.5)*0.01).toFixed(5),
-      gyro_x:gyro.x,
-      gyro_y:gyro.y,
-      gyro_z:gyro.z,
+      acc_lx:accL.x, acc_ly:accL.y, acc_lz:accL.z,
+      gyro_x:gyro.x, gyro_y:gyro.y, gyro_z:gyro.z,
+      orient_alpha:orient.alpha, orient_beta:orient.beta, orient_gamma:orient.gamma,
       proximity:proxVal,
       elapsed_sec:+elapsed.toFixed(2)
     });
@@ -435,6 +453,9 @@ function startRec(act){
     document.getElementById('live-gx').textContent=gyro.x.toFixed(2);
     document.getElementById('live-gy').textContent=gyro.y.toFixed(2);
     document.getElementById('live-prox').textContent=proxVal;
+    document.getElementById('live-lx').textContent=accL.x.toFixed(2);
+    document.getElementById('live-beta').textContent=orient.beta.toFixed(1)+'°';
+    document.getElementById('live-gamma').textContent=orient.gamma.toFixed(1)+'°';
   },50);
 
   cntInt=setInterval(()=>{
@@ -505,7 +526,7 @@ async function submitData(){
 
 function exportCSV(){
   if(!allData.length){showToast('No data','error');return;}
-  const h=['timestamp','participant_id','gender','age','brand','device_info','activity','acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z','proximity'];
+  const h=['timestamp','participant_id','gender','age','brand','device_info','activity','acc_x','acc_y','acc_z','acc_lx','acc_ly','acc_lz','gyro_x','gyro_y','gyro_z','orient_alpha','orient_beta','orient_gamma','proximity','elapsed_sec'];
   const csv=[h.join(','),...allData.map(r=>h.map(k=>r[k]).join(','))].join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
