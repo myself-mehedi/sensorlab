@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>SensorLab — Behavior Data Collector</title>
+<title>SensorLab — Behavior Data Collector v3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -17,6 +17,8 @@
     --danger-light: #fef2f2;
     --success: #16a34a;
     --success-light: #f0fdf4;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
     --text: #111827;
     --text2: #374151;
     --muted: #6b7280;
@@ -28,26 +30,31 @@
   .container { max-width:480px; margin:0 auto; padding:20px 16px 48px; }
 
   /* Header */
-  .header { display:flex; align-items:center; gap:12px; margin-bottom:20px; background:var(--accent); border-radius:16px; padding:16px; }
-  .logo { width:44px; height:44px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:20px; background:linear-gradient(135deg, #2563eb, #7c3aed); border-radius:16px; padding:16px; box-shadow:0 4px 20px rgba(37,99,235,0.3); }
+  .logo { width:44px; height:44px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; backdrop-filter:blur(8px); }
   .header-text h1 { font-size:18px; font-weight:800; color:#fff; }
   .header-text p { font-size:11px; color:rgba(255,255,255,0.75); font-family:var(--mono); margin-top:2px; }
-  .badge { margin-left:auto; background:rgba(255,255,255,0.2); color:#fff; font-family:var(--mono); font-size:10px; padding:4px 10px; border-radius:20px; font-weight:700; flex-shrink:0; }
+  .badge { margin-left:auto; background:rgba(255,255,255,0.2); color:#fff; font-family:var(--mono); font-size:10px; padding:4px 10px; border-radius:20px; font-weight:700; flex-shrink:0; backdrop-filter:blur(8px); }
 
   /* Card */
   .card { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
   .card-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
   .input-row { display:flex; gap:8px; flex-wrap:wrap; }
 
-  input[type="text"] { flex:1; min-width:100px; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--sans); font-size:14px; font-weight:500; padding:10px 14px; outline:none; transition:border-color 0.2s; }
-  input[type="text"]:focus { border-color:var(--accent); background:#fff; }
-  input[type="text"]::placeholder { color:var(--muted); }
+  input[type="text"], input[type="number"] { flex:1; min-width:80px; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--sans); font-size:14px; font-weight:500; padding:10px 14px; outline:none; transition:border-color 0.2s; }
+  input[type="text"]:focus, input[type="number"]:focus { border-color:var(--accent); background:#fff; }
+  input[type="text"]::placeholder, input[type="number"]::placeholder { color:var(--muted); }
 
-  select { background:var(--bg); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--sans); font-size:14px; font-weight:500; padding:10px 14px; outline:none; appearance:none; cursor:pointer; }
+  select { background:var(--bg); border:1.5px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--sans); font-size:14px; font-weight:500; padding:10px 14px; outline:none; appearance:none; cursor:pointer; width:100%; }
+
+  /* Config row */
+  .config-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; }
+  .config-item label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:4px; font-family:var(--mono); }
+  .config-item select, .config-item input { width:100%; font-size:12px; padding:8px 10px; }
 
   /* Sensor pills */
-  .sensor-bar { display:flex; gap:8px; margin-bottom:14px; }
-  .sensor-pill { flex:1; background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:10px 6px; text-align:center; transition:all 0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .sensor-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .sensor-pill { flex:1; min-width:60px; background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:10px 6px; text-align:center; transition:all 0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
   .sensor-pill.active { border-color:var(--success); background:var(--success-light); }
   .sensor-pill.error { border-color:var(--danger); background:var(--danger-light); }
   .sensor-pill .s-icon { font-size:16px; }
@@ -57,10 +64,10 @@
   .sensor-pill.error .s-status { color:var(--danger); font-weight:700; }
 
   /* Stats */
-  .stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
-  .stat-card { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:14px 10px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
-  .stat-num { font-size:22px; font-weight:800; color:var(--accent); font-family:var(--mono); display:block; }
-  .stat-label { font-size:10px; color:var(--muted); font-weight:600; margin-top:3px; text-transform:uppercase; }
+  .stats-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .stat-card { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:12px 8px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .stat-num { font-size:18px; font-weight:800; color:var(--accent); font-family:var(--mono); display:block; }
+  .stat-label { font-size:9px; color:var(--muted); font-weight:600; margin-top:3px; text-transform:uppercase; }
 
   /* Instructions */
   .instructions { background:var(--accent-light); border:1.5px solid #bfdbfe; border-radius:14px; padding:14px; margin-bottom:14px; }
@@ -74,15 +81,17 @@
 
   /* Activities */
   .activities-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-  .activity-btn { background:var(--card); border:2px solid var(--border); border-radius:14px; padding:16px 12px; cursor:pointer; transition:all 0.2s; text-align:left; position:relative; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .activity-btn { background:var(--card); border:2px solid var(--border); border-radius:14px; padding:14px 12px; cursor:pointer; transition:all 0.2s; text-align:left; position:relative; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
   .activity-btn.available:active { border-color:var(--accent); background:var(--accent-light); transform:scale(0.98); }
-  .activity-btn.done { border-color:var(--success); background:var(--success-light); opacity:0.85; cursor:default; }
+  .activity-btn.partial { border-color:var(--warning); background:var(--warning-light); }
+  .activity-btn.done { border-color:var(--success); background:var(--success-light); }
   .activity-btn.active-recording { border-color:var(--danger); background:var(--danger-light); animation:pulse 1s infinite; }
   @keyframes pulse { 0%,100%{border-color:var(--danger)} 50%{border-color:#fca5a5} }
   .activity-btn.disabled { opacity:0.4; cursor:not-allowed; }
-  .activity-icon { font-size:26px; margin-bottom:8px; display:block; }
+  .activity-icon { font-size:24px; margin-bottom:6px; display:block; }
   .activity-name { font-size:13px; font-weight:700; color:var(--text); display:block; margin-bottom:2px; }
   .activity-sub { font-size:10px; color:var(--muted); font-family:var(--mono); display:block; }
+  .activity-trial { font-size:10px; font-family:var(--mono); color:var(--accent); font-weight:700; margin-top:4px; display:block; }
   .activity-check { position:absolute; top:10px; right:10px; width:20px; height:20px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; font-weight:700; }
 
   /* Recording */
@@ -105,20 +114,32 @@
   .lc-label { font-size:9px; color:var(--muted); font-family:var(--mono); font-weight:700; display:block; }
   .lc-val { font-size:13px; font-family:var(--mono); font-weight:700; color:var(--danger); display:block; margin-top:2px; }
   .samples-count { margin-top:10px; font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; font-weight:600; }
+  .hz-indicator { margin-top:6px; font-family:var(--mono); font-size:10px; color:var(--warning); text-align:center; font-weight:700; }
 
   /* Buttons */
-  .submit-btn { width:100%; padding:16px; background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; box-shadow:0 4px 12px rgba(37,99,235,0.3); transition:all 0.2s; }
+  .submit-btn { width:100%; padding:16px; background:linear-gradient(135deg, #2563eb, #7c3aed); border:none; border-radius:12px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; box-shadow:0 4px 12px rgba(37,99,235,0.3); transition:all 0.2s; }
   .submit-btn:disabled { opacity:0.35; cursor:not-allowed; box-shadow:none; background:var(--muted); }
   .submit-btn:not(:disabled):active { transform:scale(0.98); }
   .csv-btn { width:100%; padding:14px; background:var(--surface); border:2px solid var(--accent); border-radius:12px; color:var(--accent); font-family:var(--sans); font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px; transition:all 0.2s; }
   .csv-btn:disabled { opacity:0.35; cursor:not-allowed; }
+  .json-btn { width:100%; padding:14px; background:var(--surface); border:2px solid #7c3aed; border-radius:12px; color:#7c3aed; font-family:var(--sans); font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px; transition:all 0.2s; }
+  .json-btn:disabled { opacity:0.35; cursor:not-allowed; }
   .reset-btn { width:100%; padding:12px; background:transparent; border:1.5px solid var(--border); border-radius:12px; color:var(--muted); font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
   .reset-btn:active { border-color:var(--danger); color:var(--danger); }
 
   /* Submit status */
   .submit-status { display:none; background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:16px; text-align:center; margin-bottom:10px; }
-  .s-icon { font-size:32px; margin-bottom:8px; }
+  .s-icon-display { font-size:32px; margin-bottom:8px; }
   .s-msg { font-family:var(--mono); font-size:12px; color:var(--muted); font-weight:600; }
+
+  /* Restore banner */
+  .restore-banner { background:var(--warning-light); border:2px solid var(--warning); border-radius:14px; padding:16px; margin-bottom:14px; text-align:center; display:none; }
+  .restore-banner h3 { font-size:14px; font-weight:700; color:var(--warning); margin-bottom:6px; }
+  .restore-banner p { font-size:12px; color:var(--text2); margin-bottom:12px; font-family:var(--mono); }
+  .restore-banner .btn-row { display:flex; gap:8px; justify-content:center; }
+  .restore-banner button { padding:10px 20px; border:none; border-radius:8px; font-family:var(--sans); font-size:13px; font-weight:700; cursor:pointer; }
+  .restore-yes { background:var(--accent); color:#fff; }
+  .restore-no { background:var(--border); color:var(--text2); }
 
   /* Permission */
   .permission-overlay { position:fixed; inset:0; background:rgba(17,24,39,0.75); z-index:100; display:flex; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(4px); }
@@ -127,7 +148,7 @@
   .permission-card h2 { font-size:22px; font-weight:800; color:var(--text); margin-bottom:10px; }
   .permission-card p { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:18px; }
   .perm-note { background:var(--accent-light); border:1.5px solid #bfdbfe; border-radius:10px; padding:12px; font-size:12px; color:var(--accent); font-family:var(--mono); text-align:left; margin-bottom:20px; line-height:1.7; font-weight:600; }
-  .perm-btn { width:100%; padding:14px; background:var(--accent); border:none; border-radius:10px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; }
+  .perm-btn { width:100%; padding:14px; background:linear-gradient(135deg, #2563eb, #7c3aed); border:none; border-radius:10px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); }
 
   /* Instruction overlay */
   .inst-overlay { position:fixed; inset:0; background:rgba(17,24,39,0.8); z-index:150; display:flex; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(4px); }
@@ -137,14 +158,18 @@
   .inst-desc { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:6px; }
   .inst-tip { background:var(--accent-light); border:1.5px solid #bfdbfe; border-radius:10px; padding:10px 14px; font-size:12px; color:var(--accent); font-family:var(--mono); font-weight:600; margin:14px 0; line-height:1.6; text-align:left; }
   .inst-trim { background:#fef9c3; border:1.5px solid #fde68a; border-radius:10px; padding:8px 14px; font-size:11px; color:#92400e; font-family:var(--mono); font-weight:600; margin-bottom:14px; }
-  .inst-start-btn { width:100%; padding:14px; background:var(--accent); border:none; border-radius:10px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); }
-  .trim-badge { display:inline-block; background:#fef9c3; border:1px solid #fde68a; color:#92400e; font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:4px; margin-left:6px; font-weight:600; }
+  .inst-trial-info { background:var(--success-light); border:1.5px solid #bbf7d0; border-radius:10px; padding:8px 14px; font-size:11px; color:var(--success); font-family:var(--mono); font-weight:600; margin-bottom:14px; }
+  .inst-start-btn { width:100%; padding:14px; background:linear-gradient(135deg, #2563eb, #7c3aed); border:none; border-radius:10px; color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); }
 
   /* Toast */
-  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:#fff; font-family:var(--mono); font-size:12px; font-weight:600; padding:10px 18px; border-radius:8px; transition:transform 0.3s; z-index:200; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:#fff; font-family:var(--mono); font-size:12px; font-weight:600; padding:10px 18px; border-radius:8px; transition:transform 0.3s; z-index:200; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.2); max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
   .toast.show { transform:translateX(-50%) translateY(0); }
   .toast.success { background:var(--success); }
   .toast.error { background:var(--danger); }
+
+  /* WakeLock indicator */
+  .wakelock-indicator { position:fixed; top:8px; right:8px; background:var(--success); color:#fff; font-family:var(--mono); font-size:9px; padding:4px 8px; border-radius:12px; font-weight:700; z-index:50; display:none; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+  .wakelock-indicator.active { display:block; }
 </style>
 </head>
 <body>
@@ -152,12 +177,13 @@
 <div class="permission-overlay" id="permOverlay">
   <div class="permission-card">
     <div class="permission-icon">📡</div>
-    <h2>SensorLab</h2>
+    <h2>SensorLab v3</h2>
     <p>This app collects motion sensor data for academic research on user behavior profiling at AIUB EEE Department.</p>
     <div class="perm-note">
       ✅ Research purpose only<br>
       ✅ No personal data stored on servers<br>
-      ✅ Data stays on your device<br>
+      ✅ Data saved locally (IndexedDB)<br>
+      ✅ 1 recording per activity<br>
       ✅ AIUB — EEE Research Project
     </div>
     <button class="perm-btn" onclick="initApp()">Allow & Start →</button>
@@ -171,23 +197,36 @@
     <div class="inst-title" id="instTitle">Walking</div>
     <div class="inst-desc" id="instDesc">Walk normally while holding the phone in your dominant hand.</div>
     <div class="inst-tip" id="instTip">📌 Keep walking naturally for 60 seconds. Do not stop.</div>
-    <div class="inst-trim">⏱ First 5s and last 5s will be auto-trimmed for clean data</div>
+    <div class="inst-trim" id="instTrimInfo">⏱ First 5s and last 5s will be auto-trimmed for clean data</div>
+
     <button class="inst-start-btn" onclick="confirmStart()">▶ Start Recording</button>
   </div>
 </div>
 
+<!-- Restore Banner -->
+<div class="restore-banner" id="restoreBanner">
+  <h3>📦 Previous Session Found</h3>
+  <p id="restoreInfo">Found data from a previous session.</p>
+  <div class="btn-row">
+    <button class="restore-yes" onclick="restoreData()">Restore Data</button>
+    <button class="restore-no" onclick="discardSaved()">Start Fresh</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+<div class="wakelock-indicator" id="wakelockBadge">🔒 AWAKE</div>
 
 <div class="container">
   <div class="header">
     <div class="logo">📡</div>
     <div class="header-text">
       <h1>SensorLab</h1>
-      <p>behavior data collector v2.0</p>
+      <p>behavior data collector v3.0</p>
     </div>
     <div class="badge">AIUB EEE</div>
   </div>
 
+  <!-- Participant Info -->
   <div class="card">
     <div class="card-label">Participant Info</div>
     <div class="input-row">
@@ -197,49 +236,78 @@
         <option value="F">Female</option>
         <option value="O">Other</option>
       </select>
-      <input type="text" id="ageInput" placeholder="Age" style="flex:0 0 64px;">
+    </div>
+    <div class="input-row" style="margin-top:8px;">
+      <input type="number" id="ageInput" placeholder="Age" style="flex:0 0 64px;">
+      <select id="handSelect" style="flex:1;">
+        <option value="R">Right Hand</option>
+        <option value="L">Left Hand</option>
+        <option value="A">Ambidextrous</option>
+      </select>
     </div>
     <div style="margin-top:8px;">
-    <select id="brandSelect" style="width:100%;" onchange="toggleOtherBrand(this)">
-      <option value="">-- Select Phone Brand --</option>
-      <option value="Samsung">Samsung</option>
-      <option value="Xiaomi">Xiaomi</option>
-      <option value="Realme">Realme</option>
-      <option value="OPPO">OPPO</option>
-      <option value="Vivo">Vivo</option>
-      <option value="iPhone">iPhone</option>
-      <option value="OnePlus">OnePlus</option>
-      <option value="Huawei">Huawei</option>
-      <option value="Nokia">Nokia</option>
-      <option value="Other">Other</option>
-    </select>
-    <input type="text" id="brandOther" placeholder="Type your phone brand..." style="width:100%;margin-top:8px;display:none;">
+      <select id="brandSelect" onchange="toggleOtherBrand(this)">
+        <option value="">-- Phone Brand --</option>
+        <option value="Samsung">Samsung</option>
+        <option value="Xiaomi">Xiaomi</option>
+        <option value="Realme">Realme</option>
+        <option value="OPPO">OPPO</option>
+        <option value="Vivo">Vivo</option>
+        <option value="iPhone">iPhone</option>
+        <option value="OnePlus">OnePlus</option>
+        <option value="Huawei">Huawei</option>
+        <option value="Nokia">Nokia</option>
+        <option value="Google">Google Pixel</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="text" id="brandOther" placeholder="Type your phone brand..." style="width:100%;margin-top:8px;display:none;">
+    </div>
+    <div style="margin-top:8px;">
+      <input type="text" id="phoneModel" placeholder="Phone Model (e.g. Galaxy S23, iPhone 15)" style="width:100%;">
+    </div>
+    <div class="input-row" style="margin-top:8px;">
+      <select id="placementSelect" style="flex:1;">
+        <option value="hand">Hand (Dominant)</option>
+        <option value="pocket-front">Front Pocket</option>
+        <option value="pocket-back">Back Pocket</option>
+        <option value="bag">Bag</option>
+        <option value="armband">Armband</option>
+        <option value="table">Table</option>
+      </select>
+      <select id="envSelect" style="flex:1;">
+        <option value="indoor">Indoor</option>
+        <option value="outdoor">Outdoor</option>
+        <option value="mixed">Mixed</option>
+      </select>
     </div>
   </div>
 
+  <!-- Sensor Status -->
   <div class="sensor-bar">
     <div class="sensor-pill" id="pill-acc"><div class="s-icon">⚡</div><div class="s-name">ACCEL</div><div class="s-status" id="acc-status">waiting</div></div>
     <div class="sensor-pill" id="pill-gyro"><div class="s-icon">🌀</div><div class="s-name">GYRO</div><div class="s-status" id="gyro-status">waiting</div></div>
+    <div class="sensor-pill" id="pill-orient"><div class="s-icon">🧭</div><div class="s-name">ORIENT</div><div class="s-status" id="orient-status">waiting</div></div>
     <div class="sensor-pill" id="pill-prox"><div class="s-icon">👁️</div><div class="s-name">PROX</div><div class="s-status" id="prox-status">waiting</div></div>
   </div>
 
   <div class="instructions">
     <h3>📋 How to use</h3>
     <ol>
-      <li><strong>Enter your Participant ID</strong> above</li>
+      <li><strong>Enter your info</strong> — ID, age, phone model, etc.</li>
       <li><strong>Hold phone naturally</strong> in dominant hand</li>
-      <li><strong>Tap an activity button</strong> — recording starts</li>
-      <li><strong>Perform for 60 seconds</strong> until timer ends</li>
-      <li><strong>Complete all 8</strong> then submit data</li>
+      <li><strong>Tap an activity</strong> — read instructions, then start</li>
+      <li><strong>Perform the activity</strong> until the timer ends</li>
+      <li><strong>Complete all 12 activities</strong> then submit data</li>
     </ol>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card"><span class="stat-num" id="statDone">0/8</span><div class="stat-label">done</div></div>
+  <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="stat-card"><span class="stat-num" id="statDone">0/12</span><div class="stat-label">done</div></div>
     <div class="stat-card"><span class="stat-num" id="statSamples">0</span><div class="stat-label">samples</div></div>
     <div class="stat-card"><span class="stat-num" id="statSize">0kb</span><div class="stat-label">size</div></div>
   </div>
 
+  <!-- Recording Panel -->
   <div class="recording-panel" id="recordingPanel">
     <div class="rec-header">
       <div class="rec-dot"></div>
@@ -264,303 +332,629 @@
       <div class="live-chip"><span class="lc-label">ACC-Z</span><span class="lc-val" id="live-az">—</span></div>
       <div class="live-chip"><span class="lc-label">GYR-X</span><span class="lc-val" id="live-gx">—</span></div>
       <div class="live-chip"><span class="lc-label">GYR-Y</span><span class="lc-val" id="live-gy">—</span></div>
-      <div class="live-chip"><span class="lc-label">PROX</span><span class="lc-val" id="live-prox">—</span></div>
+      <div class="live-chip"><span class="lc-label">ACC-MAG</span><span class="lc-val" id="live-amag">—</span></div>
       <div class="live-chip"><span class="lc-label">L-ACC-X</span><span class="lc-val" id="live-lx">—</span></div>
       <div class="live-chip"><span class="lc-label">BETA°</span><span class="lc-val" id="live-beta">—</span></div>
       <div class="live-chip"><span class="lc-label">GAMMA°</span><span class="lc-val" id="live-gamma">—</span></div>
     </div>
     <div class="samples-count" id="liveSamplesCount">0 samples collected</div>
+    <div class="hz-indicator" id="hzIndicator">Actual rate: -- Hz</div>
   </div>
 
   <div class="section-label">Select Activity to Record</div>
   <div class="activities-grid" id="activitiesGrid"></div>
 
   <div class="submit-status" id="submitStatus">
-    <div class="s-icon" id="submitIcon">⏳</div>
+    <div class="s-icon-display" id="submitIcon">⏳</div>
     <div class="s-msg" id="submitMsg"></div>
   </div>
 
   <button class="submit-btn" id="submitBtn" onclick="submitData()" disabled>☁️ Submit Data to Researcher</button>
-  <button class="csv-btn" id="csvBtn" onclick="exportCSV()" disabled>⬇ Download CSV (Backup)</button>
+  <button class="csv-btn" id="csvBtn" onclick="exportCSV()" disabled>⬇ Download CSV</button>
+  <button class="json-btn" id="jsonBtn" onclick="exportJSON()" disabled>{ } Download JSON</button>
   <button class="reset-btn" onclick="resetAll()">↺ Reset All Data</button>
 </div>
 
 <script>
+// ===== ACTIVITIES (12 total) =====
 const ACTIVITIES = [
-  { id:'walking',      label:'Walking',       icon:'🚶', sub:'Walk normally 60s' },
-  { id:'running',      label:'Running',       icon:'🏃', sub:'Jog or run 60s' },
-  { id:'sitting',      label:'Sitting',       icon:'🪑', sub:'Sit still 60s' },
-  { id:'standing',     label:'Standing',      icon:'🧍', sub:'Stand still 60s' },
-  { id:'typing',       label:'Typing',        icon:'⌨️', sub:'Type on phone 60s' },
-  { id:'phone_pickup', label:'Phone Pickup',  icon:'📲', sub:'Pick up repeatedly' },
-  { id:'phone_place',  label:'Phone Down',    icon:'📴', sub:'Place face-down' },
-  { id:'pocket',       label:'Phone in Pocket', icon:'🧥', sub:'Walk with phone in pocket' },
+  { id:'walking',       label:'Walking',         icon:'🚶', sub:'Walk normally' },
+  { id:'running',       label:'Running',         icon:'🏃', sub:'Jog or run' },
+  { id:'sitting',       label:'Sitting',         icon:'🪑', sub:'Sit still' },
+  { id:'standing',      label:'Standing',        icon:'🧍', sub:'Stand still' },
+  { id:'stairs_up',     label:'Stairs Up',       icon:'⬆️', sub:'Climb stairs' },
+  { id:'stairs_down',   label:'Stairs Down',     icon:'⬇️', sub:'Descend stairs' },
+  { id:'lying_down',    label:'Lying Down',      icon:'🛌', sub:'Lie on back/side' },
+  { id:'sit_to_stand',  label:'Sit ↔ Stand',     icon:'🔄', sub:'Transition repeatedly' },
+  { id:'typing',        label:'Typing',          icon:'⌨️', sub:'Type on phone' },
+  { id:'phone_pickup',  label:'Phone Pickup',    icon:'📲', sub:'Pick up repeatedly' },
+  { id:'phone_place',   label:'Phone Down',      icon:'📴', sub:'Place face-down' },
+  { id:'pocket',        label:'In Pocket',       icon:'🧥', sub:'Walk with phone in pocket' },
 ];
-const TRIM_SECS = 5; // trim first and last 5 seconds
-const DURATION=60, CIRC=276.46;
+
+const MAX_TRIALS = 1;
+const CIRC = 276.46;
+
+// Recording defaults (hardcoded)
+const REC_DURATION = 60;   // seconds
+const REC_TRIM = 5;        // trim first & last N seconds
+const REC_INTERVAL = 50;   // ms between samples (50ms = 20Hz)
+
 const ACT_INSTRUCTIONS = {
   walking:      { icon:'🚶', desc:'Walk normally while holding the phone in your dominant hand.', tip:'📌 Keep a steady natural walking pace. Do not stop or look at the screen.' },
-  running:      { icon:'🏃', desc:'Jog or run while holding the phone in your dominant hand.', tip:'📌 Maintain a consistent jogging pace for the full 60 seconds.' },
+  running:      { icon:'🏃', desc:'Jog or run while holding the phone in your dominant hand.', tip:'📌 Maintain a consistent jogging pace for the full duration.' },
   sitting:      { icon:'🪑', desc:'Sit still on a chair. Hold the phone in your hand without moving.', tip:'📌 Stay as still as possible. Avoid talking or moving your hands.' },
-  standing:     { icon:'🧍', desc:'Stand still. Hold the phone in your hand without moving.', tip:'📌 Stand naturally, feet shoulder-width apart. Stay still for 60 seconds.' },
-  typing:       { icon:'⌨️', desc:'Type normally on your phone keyboard — any text you like.', tip:'📌 Type continuously for 60 seconds. Speed does not matter.' },
-  phone_pickup: { icon:'📲', desc:'Repeatedly pick up the phone from a flat surface and put it down.', tip:'📌 Lift phone, hold briefly, put back down. Repeat throughout 60 seconds.' },
-  phone_place:  { icon:'📴', desc:'Repeatedly place the phone face-down on a flat surface.', tip:'📌 Place face-down, wait 2 seconds, pick up, repeat throughout 60 seconds.' },
-  pocket:       { icon:'🧥', desc:'Put the phone in your pocket and walk normally for 60 seconds.', tip:'📌 Phone must be in pocket. Walk at normal pace. Do not hold phone.' },
+  standing:     { icon:'🧍', desc:'Stand still. Hold the phone in your hand without moving.', tip:'📌 Stand naturally, feet shoulder-width apart. Stay still.' },
+  stairs_up:    { icon:'⬆️', desc:'Walk up stairs at a normal pace while holding the phone.', tip:'📌 Use a staircase with at least 10 steps. Walk up and down if needed to fill the time.' },
+  stairs_down:  { icon:'⬇️', desc:'Walk down stairs at a normal pace while holding the phone.', tip:'📌 Use a staircase with at least 10 steps. Walk down and up if needed to fill the time.' },
+  lying_down:   { icon:'🛌', desc:'Lie down on your back or side. Hold the phone on your chest or beside you.', tip:'📌 Stay as still as possible. Breathe normally. Do not use the phone.' },
+  sit_to_stand: { icon:'🔄', desc:'Repeatedly sit down and stand up from a chair. Hold the phone in hand.', tip:'📌 Sit fully, pause 2 seconds, stand fully, pause 2 seconds. Repeat for the full duration.' },
+  typing:       { icon:'⌨️', desc:'Type normally on your phone keyboard — any text you like.', tip:'📌 Type continuously. Speed does not matter. Just keep typing.' },
+  phone_pickup: { icon:'📲', desc:'Repeatedly pick up the phone from a flat surface and put it down.', tip:'📌 Lift phone, hold briefly, put back down. Repeat throughout the duration.' },
+  phone_place:  { icon:'📴', desc:'Repeatedly place the phone face-down on a flat surface.', tip:'📌 Place face-down, wait 2 seconds, pick up, repeat.' },
+  pocket:       { icon:'🧥', desc:'Put the phone in your pocket and walk normally.', tip:'📌 Phone must be in pocket. Walk at normal pace. Do not hold phone.' },
 };
 
-let pendingAct = null; // activity waiting for user to confirm
-const SHEETDB='https://script.google.com/macros/s/AKfycbwfevxTAtgFmF8mk5M4JEIvqjercb5IVyPKk6AAVdExYSep272Z_50zIlc0FRKVOCawSQ/exec';
-// Capture device info once
-const DEVICE_INFO = (navigator.userAgent||'unknown') + ' | ' + (navigator.platform||'unknown');
+// ===== STATE =====
+let pendingAct = null;
+const SHEETDB = 'https://script.google.com/macros/s/AKfycbwfevxTAtgFmF8mk5M4JEIvqjercb5IVyPKk6AAVdExYSep272Z_50zIlc0FRKVOCawSQ/exec';
+const DEVICE_INFO = (navigator.userAgent || 'unknown') + ' | ' + (navigator.platform || 'unknown');
+const SESSION_ID = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
 
-let allData=[],done=new Set(),recording=false,curAct=null;
-let recInt=null,cntInt=null,secLeft=DURATION,sessSamples=0;
-let acc={x:0,y:0,z:0},gyro={x:0,y:0,z:0},prox='far';
-let accL={x:0,y:0,z:0}; // linear acceleration (gravity-free)
-let orient={alpha:0,beta:0,gamma:0}; // device orientation
-let accOk=false,gyroOk=false,proxOk=false,orientOk=false;
+let allData = [], done = new Set(), recording = false, curAct = null;
+let recInt = null, cntInt = null, secLeft = 60, sessSamples = 0;
+let acc = {x:0,y:0,z:0}, gyro = {x:0,y:0,z:0}, prox = 'far';
+let accL = {x:0,y:0,z:0};
+let orient = {alpha:0, beta:0, gamma:0};
+let accOk = false, gyroOk = false, proxOk = false, orientOk = false;
+let wakeLock = null;
+let lastSampleTime = 0;
+let actualHz = 0;
+let consentTimestamp = null;
 
-function initApp(){
-  document.getElementById('permOverlay').style.display='none';
-  setupSensors(); renderActivities();
+// done set tracks completed activities
+
+// ===== IndexedDB =====
+const DB_NAME = 'SensorLabDB';
+const DB_VERSION = 1;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('session')) {
+        db.createObjectStore('session', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
-function setupSensors(){
-  if(window.DeviceMotionEvent){
-    if(typeof DeviceMotionEvent.requestPermission==='function'){
-      DeviceMotionEvent.requestPermission().then(s=>{if(s==='granted')listenMotion();}).catch(()=>{setErr('acc');setErr('gyro');});
-    } else listenMotion();
-  } else {setErr('acc');setErr('gyro');}
-  if('ProximitySensor' in window){
-    try{const s=new ProximitySensor();s.addEventListener('reading',()=>{prox=s.near?'near':'far';document.getElementById('live-prox').textContent=prox;setOk('prox');});s.start();}
-    catch(e){setPart('prox');}
-  } else setPart('prox');
+
+async function saveToIndexedDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('session', 'readwrite');
+    const store = tx.objectStore('session');
+    store.put({ key: 'allData', value: allData });
+    store.put({ key: 'doneSet', value: Array.from(done) });
+    store.put({ key: 'participantId', value: document.getElementById('participantId').value });
+    store.put({ key: 'sessionId', value: SESSION_ID });
+    store.put({ key: 'consentTimestamp', value: consentTimestamp });
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+  } catch(e) {
+    console.warn('IndexedDB save failed:', e);
+  }
 }
-function listenMotion(){
-  window.addEventListener('devicemotion',e=>{
-    if(e.accelerationIncludingGravity){
-      acc.x=+(e.accelerationIncludingGravity.x||0).toFixed(4);
-      acc.y=+(e.accelerationIncludingGravity.y||0).toFixed(4);
-      acc.z=+(e.accelerationIncludingGravity.z||0).toFixed(4);
-      if(!accOk){accOk=true;setOk('acc');}
-      document.getElementById('live-ax').textContent=acc.x.toFixed(2);
-      document.getElementById('live-ay').textContent=acc.y.toFixed(2);
-      document.getElementById('live-az').textContent=acc.z.toFixed(2);
+
+async function loadFromIndexedDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('session', 'readonly');
+    const store = tx.objectStore('session');
+    const getData = (key) => new Promise((res) => {
+      const req = store.get(key);
+      req.onsuccess = () => res(req.result ? req.result.value : null);
+      req.onerror = () => res(null);
+    });
+    const savedData = await getData('allData');
+    const savedDone = await getData('doneSet');
+    const savedPid = await getData('participantId');
+    db.close();
+    if (savedData && savedData.length > 0) {
+      return { allData: savedData, doneSet: savedDone, participantId: savedPid };
     }
-    if(e.rotationRate){
-      gyro.x=+(e.rotationRate.alpha||0).toFixed(4);
-      gyro.y=+(e.rotationRate.beta||0).toFixed(4);
-      gyro.z=+(e.rotationRate.gamma||0).toFixed(4);
-      if(!gyroOk){gyroOk=true;setOk('gyro');}
-      document.getElementById('live-gx').textContent=gyro.x.toFixed(2);
-      document.getElementById('live-gy').textContent=gyro.y.toFixed(2);
+  } catch(e) {
+    console.warn('IndexedDB load failed:', e);
+  }
+  return null;
+}
+
+async function clearIndexedDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('session', 'readwrite');
+    tx.objectStore('session').clear();
+    await new Promise((res) => { tx.oncomplete = res; });
+    db.close();
+  } catch(e) { /* ignore */ }
+}
+
+// ===== WakeLock =====
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      document.getElementById('wakelockBadge').classList.add('active');
+      wakeLock.addEventListener('release', () => {
+        document.getElementById('wakelockBadge').classList.remove('active');
+      });
+    } catch(e) {
+      console.warn('WakeLock failed:', e);
     }
-    // Linear acceleration (gravity-free)
-    if(e.acceleration){
-      accL.x=+(e.acceleration.x||0).toFixed(4);
-      accL.y=+(e.acceleration.y||0).toFixed(4);
-      accL.z=+(e.acceleration.z||0).toFixed(4);
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) {
+    try { await wakeLock.release(); } catch(e) { /* ignore */ }
+    wakeLock = null;
+    document.getElementById('wakelockBadge').classList.remove('active');
+  }
+}
+
+// ===== APP INIT =====
+async function initApp() {
+  consentTimestamp = new Date().toISOString();
+  document.getElementById('permOverlay').style.display = 'none';
+  setupSensors();
+  renderActivities();
+
+  // Check for saved data
+  const saved = await loadFromIndexedDB();
+  if (saved) {
+    document.getElementById('restoreInfo').textContent =
+      `Found ${saved.allData.length} samples from participant "${saved.participantId || '?'}"`;
+    document.getElementById('restoreBanner').style.display = 'block';
+    window._savedSession = saved;
+  }
+}
+
+function restoreData() {
+  const saved = window._savedSession;
+  if (saved) {
+    allData = saved.allData;
+    done = new Set(saved.doneSet || []);
+    if (saved.participantId) document.getElementById('participantId').value = saved.participantId;
+    updateStats();
+    renderActivities();
+    checkSubmitReady();
+    showToast('✓ Session restored! ' + allData.length + ' samples loaded.', 'success');
+  }
+  document.getElementById('restoreBanner').style.display = 'none';
+}
+
+function discardSaved() {
+  clearIndexedDB();
+  document.getElementById('restoreBanner').style.display = 'none';
+  showToast('Previous data discarded', '');
+}
+
+// ===== SENSORS =====
+function setupSensors() {
+  if (window.DeviceMotionEvent) {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(s => {
+        if (s === 'granted') listenMotion();
+      }).catch(() => { setErr('acc'); setErr('gyro'); });
+    } else {
+      listenMotion();
     }
-  },true);
-  // Orientation listener
-  window.addEventListener('deviceorientation',e=>{
-    if(e.alpha!==null){
-      orient.alpha=+(e.alpha||0).toFixed(4);
-      orient.beta=+(e.beta||0).toFixed(4);
-      orient.gamma=+(e.gamma||0).toFixed(4);
-      if(!orientOk){orientOk=true;}
-      if(!gyroOk){gyro.x=orient.alpha;gyro.y=orient.beta;gyro.z=orient.gamma;gyroOk=true;setOk('gyro');}
+  } else {
+    setErr('acc'); setErr('gyro');
+  }
+
+  if ('ProximitySensor' in window) {
+    try {
+      const s = new ProximitySensor();
+      s.addEventListener('reading', () => {
+        prox = s.near ? 'near' : 'far';
+        proxOk = true;
+        setOk('prox');
+      });
+      s.start();
+    } catch(e) { setPart('prox'); }
+  } else {
+    setPart('prox');
+  }
+}
+
+function listenMotion() {
+  window.addEventListener('devicemotion', e => {
+    if (e.accelerationIncludingGravity) {
+      acc.x = +(e.accelerationIncludingGravity.x || 0).toFixed(4);
+      acc.y = +(e.accelerationIncludingGravity.y || 0).toFixed(4);
+      acc.z = +(e.accelerationIncludingGravity.z || 0).toFixed(4);
+      if (!accOk) { accOk = true; setOk('acc'); }
+    }
+    if (e.rotationRate) {
+      gyro.x = +(e.rotationRate.alpha || 0).toFixed(4);
+      gyro.y = +(e.rotationRate.beta || 0).toFixed(4);
+      gyro.z = +(e.rotationRate.gamma || 0).toFixed(4);
+      if (!gyroOk) { gyroOk = true; setOk('gyro'); }
+    }
+    if (e.acceleration) {
+      accL.x = +(e.acceleration.x || 0).toFixed(4);
+      accL.y = +(e.acceleration.y || 0).toFixed(4);
+      accL.z = +(e.acceleration.z || 0).toFixed(4);
+    }
+  }, true);
+
+  window.addEventListener('deviceorientation', e => {
+    if (e.alpha !== null) {
+      orient.alpha = +(e.alpha || 0).toFixed(4);
+      orient.beta = +(e.beta || 0).toFixed(4);
+      orient.gamma = +(e.gamma || 0).toFixed(4);
+      if (!orientOk) { orientOk = true; setOk('orient'); }
+      if (!gyroOk) {
+        gyro.x = orient.alpha;
+        gyro.y = orient.beta;
+        gyro.z = orient.gamma;
+        gyroOk = true;
+        setOk('gyro');
+      }
     }
   });
 }
-function setOk(id){document.getElementById('pill-'+id).classList.add('active');document.getElementById(id+'-status').textContent='active';}
-function setErr(id){document.getElementById('pill-'+id).classList.add('error');document.getElementById(id+'-status').textContent='N/A';}
-function setPart(id){document.getElementById('pill-'+id).classList.add('active');document.getElementById(id+'-status').textContent='sim';}
 
-function renderActivities(){
-  const g=document.getElementById('activitiesGrid');
-  g.innerHTML='';
-  ACTIVITIES.forEach(a=>{
-    const isDone=done.has(a.id),isRec=recording&&curAct===a.id,isDis=recording&&!isRec;
-    const btn=document.createElement('button');
-    btn.className='activity-btn '+(isDone?'done':isRec?'active-recording':isDis?'disabled':'available');
-    btn.onclick=()=>{if(!isDone&&!isDis&&!recording)showInstruction(a);};
-    btn.innerHTML=`<span class="activity-icon">${a.icon}</span><span class="activity-name">${a.label}</span><span class="activity-sub">${a.sub}</span>${isDone?'<div class="activity-check">✓</div>':''}`;
+function setOk(id) {
+  document.getElementById('pill-' + id).classList.add('active');
+  document.getElementById(id + '-status').textContent = 'active';
+}
+function setErr(id) {
+  document.getElementById('pill-' + id).classList.add('error');
+  document.getElementById(id + '-status').textContent = 'N/A';
+}
+function setPart(id) {
+  document.getElementById('pill-' + id).classList.add('active');
+  document.getElementById(id + '-status').textContent = 'sim';
+}
+
+// ===== ACTIVITIES UI =====
+function renderActivities() {
+  const g = document.getElementById('activitiesGrid');
+  g.innerHTML = '';
+  ACTIVITIES.forEach(a => {
+    const isDone = done.has(a.id);
+    const isRec = recording && curAct === a.id;
+    const isDis = recording && !isRec;
+
+    const btn = document.createElement('button');
+    let cls = 'activity-btn ';
+    if (isRec) cls += 'active-recording';
+    else if (isDis) cls += 'disabled';
+    else if (isDone) cls += 'done';
+    else cls += 'available';
+
+    btn.className = cls;
+    btn.onclick = () => {
+      if (!isDone && !isDis && !recording) showInstruction(a);
+    };
+
+    btn.innerHTML = `
+      <span class="activity-icon">${a.icon}</span>
+      <span class="activity-name">${a.label}</span>
+      <span class="activity-sub">${a.sub}</span>
+      ${isDone ? '<div class="activity-check">✓</div>' : ''}`;
     g.appendChild(btn);
   });
 }
 
-function showInstruction(act){
-  const pid=document.getElementById('participantId').value.trim();
-  if(!pid){showToast('⚠ Enter Participant ID first','error');return;}
-  pendingAct=act;
-  const info=ACT_INSTRUCTIONS[act.id]||{icon:act.icon,desc:'Perform this activity for 60 seconds.',tip:'📌 Stay consistent throughout the recording.'};
-  document.getElementById('instIcon').textContent=info.icon;
-  document.getElementById('instTitle').textContent=act.label;
-  document.getElementById('instDesc').textContent=info.desc;
-  document.getElementById('instTip').textContent=info.tip;
-  document.getElementById('instOverlay').style.display='flex';
+function showInstruction(act) {
+  const pid = document.getElementById('participantId').value.trim();
+  if (!pid) { showToast('⚠ Enter Participant ID first', 'error'); return; }
+  pendingAct = act;
+  const info = ACT_INSTRUCTIONS[act.id] || { icon: act.icon, desc: 'Perform this activity.', tip: '📌 Stay consistent.' };
+  const trimSec = REC_TRIM;
+  const duration = REC_DURATION;
+
+  document.getElementById('instIcon').textContent = info.icon;
+  document.getElementById('instTitle').textContent = act.label;
+  document.getElementById('instDesc').textContent = info.desc;
+  document.getElementById('instTip').textContent = info.tip;
+  document.getElementById('instTrimInfo').textContent =
+    `⏱ First ${trimSec}s and last ${trimSec}s auto-trimmed (${duration}s recording)`;
+  document.getElementById('instOverlay').style.display = 'flex';
 }
 
-function confirmStart(){
-  document.getElementById('instOverlay').style.display='none';
-  if(pendingAct) startRec(pendingAct);
+function confirmStart() {
+  document.getElementById('instOverlay').style.display = 'none';
+  if (pendingAct) startRec(pendingAct);
 }
 
-function startRec(act){
-  const pid=document.getElementById('participantId').value.trim();
-  if(!pid){showToast('⚠ Enter Participant ID first','error');return;}
-  recording=true;curAct=act.id;secLeft=DURATION;sessSamples=0;
+// ===== RECORDING =====
+async function startRec(act) {
+  const pid = document.getElementById('participantId').value.trim();
+  if (!pid) { showToast('⚠ Enter Participant ID first', 'error'); return; }
 
-  // Buffer to hold ALL samples including trim zones
-  let sessionBuffer=[];
+  const DURATION = REC_DURATION;
+  const TRIM_SECS = REC_TRIM;
+  const SAMPLE_INTERVAL = REC_INTERVAL;
+
+  recording = true;
+  curAct = act.id;
+  secLeft = DURATION;
+  sessSamples = 0;
+  lastSampleTime = 0;
+
+  // Request WakeLock
+  await requestWakeLock();
+
+  let sessionBuffer = [];
 
   document.getElementById('recordingPanel').classList.add('visible');
-  document.getElementById('recActivityLabel').textContent=act.label.toUpperCase()+' ✂ auto-trim ON';
-  document.getElementById('countdownNum').textContent=secLeft;
-  document.getElementById('countdownRing').style.strokeDashoffset=0;
+  document.getElementById('recActivityLabel').textContent =
+    act.label.toUpperCase() + (TRIM_SECS > 0 ? ' ✂ auto-trim ON' : '');
+  document.getElementById('countdownNum').textContent = secLeft;
+  document.getElementById('countdownRing').style.strokeDashoffset = 0;
   renderActivities();
 
-  recInt=setInterval(()=>{
-    const pid=document.getElementById('participantId').value.trim();
-    const gender=document.getElementById('genderSelect').value;
-    const age=document.getElementById('ageInput').value||'?';
-    const brandSel=document.getElementById('brandSelect').value;
-    const brand=brandSel==='Other'?(document.getElementById('brandOther').value||'Other'):brandSel||'Unknown';
-    const proxVal=proxOk?prox:(curAct==='pocket'?'near':(curAct==='phone_place'?'near':'far'));
-    const elapsed=DURATION-secLeft; // seconds elapsed
-    sessionBuffer.push({
-      timestamp:Date.now(),
-      participant_id:pid,
-      gender,age,brand,
-      device_info:DEVICE_INFO,
-      activity:curAct,
-      acc_x:+(acc.x+(Math.random()-0.5)*0.01).toFixed(5),
-      acc_y:+(acc.y+(Math.random()-0.5)*0.01).toFixed(5),
-      acc_z:+(acc.z+(Math.random()-0.5)*0.01).toFixed(5),
-      acc_lx:accL.x, acc_ly:accL.y, acc_lz:accL.z,
-      gyro_x:gyro.x, gyro_y:gyro.y, gyro_z:gyro.z,
-      orient_alpha:orient.alpha, orient_beta:orient.beta, orient_gamma:orient.gamma,
-      proximity:proxVal,
-      elapsed_sec:+elapsed.toFixed(2)
-    });
-    sessSamples++;
-    updateStats();
-    document.getElementById('liveSamplesCount').textContent=sessSamples+' samples (trimming first & last 5s)';
-    document.getElementById('live-ax').textContent=acc.x.toFixed(2);
-    document.getElementById('live-ay').textContent=acc.y.toFixed(2);
-    document.getElementById('live-az').textContent=acc.z.toFixed(2);
-    document.getElementById('live-gx').textContent=gyro.x.toFixed(2);
-    document.getElementById('live-gy').textContent=gyro.y.toFixed(2);
-    document.getElementById('live-prox').textContent=proxVal;
-    document.getElementById('live-lx').textContent=accL.x.toFixed(2);
-    document.getElementById('live-beta').textContent=orient.beta.toFixed(1)+'°';
-    document.getElementById('live-gamma').textContent=orient.gamma.toFixed(1)+'°';
-  },50);
+  // Gather metadata once
+  const gender = document.getElementById('genderSelect').value;
+  const age = document.getElementById('ageInput').value || '?';
+  const hand = document.getElementById('handSelect').value;
+  const brandSel = document.getElementById('brandSelect').value;
+  const brand = brandSel === 'Other' ? (document.getElementById('brandOther').value || 'Other') : brandSel || 'Unknown';
+  const model = document.getElementById('phoneModel').value.trim() || 'Unknown';
+  const placement = document.getElementById('placementSelect').value;
+  const environment = document.getElementById('envSelect').value;
+  const proxVal = () => proxOk ? prox : (curAct === 'pocket' ? 'near' : (curAct === 'phone_place' ? 'near' : 'far'));
 
-  cntInt=setInterval(()=>{
+  recInt = setInterval(() => {
+    const now = performance.now();
+    if (lastSampleTime > 0) {
+      const delta = now - lastSampleTime;
+      actualHz = Math.round(1000 / delta);
+    }
+    lastSampleTime = now;
+
+    const elapsed = DURATION - secLeft;
+
+    // Compute magnitudes — NO fake noise, raw sensor data only
+    const acc_mag = +Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z).toFixed(4);
+    const gyro_mag = +Math.sqrt(gyro.x*gyro.x + gyro.y*gyro.y + gyro.z*gyro.z).toFixed(4);
+    const accL_mag = +Math.sqrt(accL.x*accL.x + accL.y*accL.y + accL.z*accL.z).toFixed(4);
+
+    sessionBuffer.push({
+      timestamp: Date.now(),
+      session_id: SESSION_ID,
+      participant_id: pid,
+      gender, age, hand_dominance: hand,
+      brand, model, phone_placement: placement, environment,
+      device_info: DEVICE_INFO,
+      activity: curAct,
+      acc_x: acc.x,
+      acc_y: acc.y,
+      acc_z: acc.z,
+      acc_mag,
+      acc_lx: accL.x, acc_ly: accL.y, acc_lz: accL.z, acc_l_mag: accL_mag,
+      gyro_x: gyro.x, gyro_y: gyro.y, gyro_z: gyro.z,
+      gyro_mag,
+      orient_alpha: orient.alpha, orient_beta: orient.beta, orient_gamma: orient.gamma,
+      proximity: proxVal(),
+      elapsed_sec: +elapsed.toFixed(2),
+      consent_time: consentTimestamp
+    });
+
+    sessSamples++;
+    updateLiveDisplay(acc_mag);
+    document.getElementById('liveSamplesCount').textContent = sessSamples + ' samples' + (TRIM_SECS > 0 ? ` (trimming first & last ${TRIM_SECS}s)` : '');
+    document.getElementById('hzIndicator').textContent = 'Actual rate: ~' + actualHz + ' Hz';
+  }, SAMPLE_INTERVAL);
+
+  cntInt = setInterval(() => {
     secLeft--;
-    document.getElementById('countdownNum').textContent=secLeft;
-    document.getElementById('countdownRing').style.strokeDashoffset=CIRC*(1-secLeft/DURATION);
-    if(secLeft<=0) stopRec(true, sessionBuffer);
-  },1000);
+    document.getElementById('countdownNum').textContent = secLeft;
+    document.getElementById('countdownRing').style.strokeDashoffset = CIRC * (1 - secLeft / DURATION);
+    if (secLeft <= 0) stopRec(true, sessionBuffer, TRIM_SECS, DURATION);
+  }, 1000);
 }
 
-function stopRec(completed, sessionBuffer=[]){
-  clearInterval(recInt);clearInterval(cntInt);recording=false;
-  if(completed && sessionBuffer.length>0){
-    // Auto-trim: remove first TRIM_SECS and last TRIM_SECS seconds
-    const samplesPerSec = sessionBuffer.length / DURATION;
-    const trimCount = Math.floor(TRIM_SECS * samplesPerSec);
-    const trimmed = sessionBuffer.slice(trimCount, sessionBuffer.length - trimCount);
+function updateLiveDisplay(acc_mag) {
+  document.getElementById('live-ax').textContent = acc.x.toFixed(2);
+  document.getElementById('live-ay').textContent = acc.y.toFixed(2);
+  document.getElementById('live-az').textContent = acc.z.toFixed(2);
+  document.getElementById('live-gx').textContent = gyro.x.toFixed(2);
+  document.getElementById('live-gy').textContent = gyro.y.toFixed(2);
+  document.getElementById('live-amag').textContent = acc_mag.toFixed(2);
+  document.getElementById('live-lx').textContent = accL.x.toFixed(2);
+  document.getElementById('live-beta').textContent = orient.beta.toFixed(1) + '°';
+  document.getElementById('live-gamma').textContent = orient.gamma.toFixed(1) + '°';
+}
+
+async function stopRec(completed, sessionBuffer = [], trimSecs = 5, duration = 60) {
+  clearInterval(recInt);
+  clearInterval(cntInt);
+  recording = false;
+
+  // Release WakeLock
+  await releaseWakeLock();
+
+  if (completed && sessionBuffer.length > 0) {
+    const samplesPerSec = sessionBuffer.length / duration;
+    const trimCount = Math.floor(trimSecs * samplesPerSec);
+    const trimmed = trimSecs > 0 ? sessionBuffer.slice(trimCount, sessionBuffer.length - trimCount) : sessionBuffer;
+
     allData.push(...trimmed);
     done.add(curAct);
-    showToast('✓ '+curAct+' done! '+trimmed.length+' clean samples kept.','success');
+
+    // Save to IndexedDB after each recording
+    await saveToIndexedDB();
+
+    showToast('✓ ' + curAct + ' done! ' + trimmed.length + ' clean samples.', 'success');
   }
-  curAct=null;
+
+  curAct = null;
   document.getElementById('recordingPanel').classList.remove('visible');
-  updateStats();renderActivities();
-  if(done.size===ACTIVITIES.length){
-    document.getElementById('submitBtn').disabled=false;
-    document.getElementById('csvBtn').disabled=false;
-    showToast('🎉 All '+ACTIVITIES.length+' activities done! Please submit.','success');
+  updateStats();
+  renderActivities();
+  checkSubmitReady();
+}
+
+function checkSubmitReady() {
+  const allDone = done.size >= ACTIVITIES.length;
+  document.getElementById('submitBtn').disabled = !allDone;
+  document.getElementById('csvBtn').disabled = allData.length === 0;
+  document.getElementById('jsonBtn').disabled = allData.length === 0;
+
+  if (allDone) {
+    showToast('🎉 All ' + ACTIVITIES.length + ' activities done! Please submit.', 'success');
   }
 }
 
-function updateStats(){
-  document.getElementById('statDone').textContent=done.size+'/'+ACTIVITIES.length;
-  document.getElementById('statSamples').textContent=allData.length;
-  document.getElementById('statSize').textContent=Math.round(JSON.stringify(allData).length/1024)+'kb';
+function updateStats() {
+  document.getElementById('statDone').textContent = done.size + '/' + ACTIVITIES.length;
+  document.getElementById('statSamples').textContent = allData.length;
+  document.getElementById('statSize').textContent = Math.round(JSON.stringify(allData).length / 1024) + 'kb';
 }
 
-async function submitData(){
-  if(!allData.length){showToast('No data to submit','error');return;}
-  const sd=document.getElementById('submitStatus');
-  const icon=document.getElementById('submitIcon');
-  const msg=document.getElementById('submitMsg');
-  sd.style.display='block';
-  icon.textContent='⏳';
-  msg.textContent='Uploading all data in one batch...';
-  msg.style.color='#6b7280';
-  document.getElementById('submitBtn').disabled=true;
+// ===== SUBMISSION =====
+async function submitData() {
+  if (!allData.length) { showToast('No data to submit', 'error'); return; }
 
-  try{
-    await fetch(SHEETDB,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(allData)
+  const sd = document.getElementById('submitStatus');
+  const icon = document.getElementById('submitIcon');
+  const msg = document.getElementById('submitMsg');
+  sd.style.display = 'block';
+  icon.textContent = '⏳';
+  msg.textContent = 'Uploading ' + allData.length + ' rows...';
+  msg.style.color = '#6b7280';
+  document.getElementById('submitBtn').disabled = true;
+
+  // Always auto-download CSV as backup first
+  exportCSV(true);
+
+  try {
+    const response = await fetch(SHEETDB, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allData),
+      redirect: 'follow'
     });
-    icon.textContent='✅';
-    msg.textContent='Success! All '+allData.length+' rows submitted!';
-    msg.style.color='#16a34a';
-    showToast('Data submitted successfully!','success');
-  }catch(err){
-    icon.textContent='⚠️';
-    msg.textContent='Submission failed. Please download CSV backup.';
-    msg.style.color='#d97706';
-    document.getElementById('submitBtn').disabled=false;
-    setTimeout(()=>exportCSV(),800);
+
+    // If we get here without error, consider it a success
+    icon.textContent = '✅';
+    msg.textContent = 'Submitted! ' + allData.length + ' rows sent. CSV backup also downloaded.';
+    msg.style.color = '#16a34a';
+    showToast('Data submitted + CSV backup saved!', 'success');
+  } catch(err) {
+    // Try no-cors as fallback (can't verify but at least attempts delivery)
+    try {
+      await fetch(SHEETDB, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(allData)
+      });
+      icon.textContent = '⚠️';
+      msg.textContent = 'Sent (unverified). CSV backup downloaded. Please confirm with researcher.';
+      msg.style.color = '#d97706';
+      showToast('Data sent (unverified). CSV saved as backup.', 'success');
+    } catch(e2) {
+      icon.textContent = '❌';
+      msg.textContent = 'Submission failed. CSV backup was downloaded.';
+      msg.style.color = '#dc2626';
+      document.getElementById('submitBtn').disabled = false;
+      showToast('Submit failed — use CSV backup!', 'error');
+    }
   }
 }
 
-function exportCSV(){
-  if(!allData.length){showToast('No data','error');return;}
-  const h=['timestamp','participant_id','gender','age','brand','device_info','activity','acc_x','acc_y','acc_z','acc_lx','acc_ly','acc_lz','gyro_x','gyro_y','gyro_z','orient_alpha','orient_beta','orient_gamma','proximity','elapsed_sec'];
-  const csv=[h.join(','),...allData.map(r=>h.map(k=>r[k]).join(','))].join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='sensorlab_'+(document.getElementById('participantId').value||'data')+'_'+Date.now()+'.csv';
+// ===== EXPORT CSV =====
+function exportCSV(silent = false) {
+  if (!allData.length) { if (!silent) showToast('No data', 'error'); return; }
+  const h = [
+    'timestamp','session_id','participant_id','gender','age','hand_dominance',
+    'brand','model','phone_placement','environment','device_info',
+    'activity',
+    'acc_x','acc_y','acc_z','acc_mag',
+    'acc_lx','acc_ly','acc_lz','acc_l_mag',
+    'gyro_x','gyro_y','gyro_z','gyro_mag',
+    'orient_alpha','orient_beta','orient_gamma',
+    'proximity','elapsed_sec','consent_time'
+  ];
+  const escapeCSV = (val) => {
+    const str = String(val == null ? '' : val);
+    return str.includes(',') || str.includes('"') || str.includes('\n') ? '"' + str.replace(/"/g, '""') + '"' : str;
+  };
+  const csv = [h.join(','), ...allData.map(r => h.map(k => escapeCSV(r[k])).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'sensorlab_' + (document.getElementById('participantId').value || 'data') + '_' + Date.now() + '.csv';
   a.click();
-  showToast('✓ CSV downloaded!','success');
+  if (!silent) showToast('✓ CSV downloaded!', 'success');
 }
 
-function resetAll(){
-  if(recording)stopRec(false);
-  if(!confirm('Reset all data?'))return;
-  allData=[];done=new Set();
-  document.getElementById('submitBtn').disabled=true;
-  document.getElementById('csvBtn').disabled=true;
-  document.getElementById('submitStatus').style.display='none';
-  updateStats();renderActivities();
-  showToast('Data reset','');
+// ===== EXPORT JSON =====
+function exportJSON() {
+  if (!allData.length) { showToast('No data', 'error'); return; }
+  const exportObj = {
+    version: '3.0',
+    session_id: SESSION_ID,
+    participant_id: document.getElementById('participantId').value,
+    consent_time: consentTimestamp,
+    export_time: new Date().toISOString(),
+    total_samples: allData.length,
+    activities: ACTIVITIES.map(a => ({ id: a.id, label: a.label, done: done.has(a.id) })),
+    config: {
+      duration: REC_DURATION + 's',
+      trim: REC_TRIM + 's',
+      sample_rate: REC_INTERVAL + 'ms'
+    },
+    data: allData
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' }));
+  a.download = 'sensorlab_' + (document.getElementById('participantId').value || 'data') + '_' + Date.now() + '.json';
+  a.click();
+  showToast('✓ JSON downloaded!', 'success');
 }
 
-function toggleOtherBrand(sel){
-  const otherInput=document.getElementById('brandOther');
-  if(sel.value==='Other'){
-    otherInput.style.display='block';
+// ===== RESET =====
+async function resetAll() {
+  if (recording) stopRec(false);
+  if (!confirm('Reset ALL data? This cannot be undone.')) return;
+  allData = [];
+  done = new Set();
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('csvBtn').disabled = true;
+  document.getElementById('jsonBtn').disabled = true;
+  document.getElementById('submitStatus').style.display = 'none';
+  await clearIndexedDB();
+  updateStats();
+  renderActivities();
+  showToast('Data reset', '');
+}
+
+// ===== UTILS =====
+function toggleOtherBrand(sel) {
+  const otherInput = document.getElementById('brandOther');
+  if (sel.value === 'Other') {
+    otherInput.style.display = 'block';
     otherInput.focus();
   } else {
-    otherInput.style.display='none';
-    otherInput.value='';
+    otherInput.style.display = 'none';
+    otherInput.value = '';
   }
 }
 
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show '+type;
-  setTimeout(()=>t.className='toast',3000);
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
 }
 </script>
 </body>
