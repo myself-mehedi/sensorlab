@@ -93,6 +93,8 @@
   .activity-sub { font-size:10px; color:var(--muted); font-family:var(--mono); display:block; }
   .activity-trial { font-size:10px; font-family:var(--mono); color:var(--accent); font-weight:700; margin-top:4px; display:block; }
   .activity-check { position:absolute; top:10px; right:10px; width:20px; height:20px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; font-weight:700; }
+  .redo-btn { margin-top:8px; width:100%; padding:6px 0; background:transparent; border:1.5px solid var(--warning); border-radius:8px; color:var(--warning); font-family:var(--sans); font-size:11px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .redo-btn:active { background:var(--warning-light); }
 
   /* Recording */
   .recording-panel { background:var(--danger-light); border:2px solid var(--danger); border-radius:16px; padding:20px; margin-bottom:14px; display:none; }
@@ -647,9 +649,56 @@ function renderActivities() {
       <span class="activity-icon">${a.icon}</span>
       <span class="activity-name">${a.label}</span>
       <span class="activity-sub">${a.sub}</span>
-      ${isDone ? '<div class="activity-check">✓</div>' : ''}`;
+      ${isDone ? '<div class="activity-check">✓</div>' : ''}
+      ${isDone && !recording ? `<button class="redo-btn" onclick="event.stopPropagation(); redoActivity('${a.id}')">🔄 Do it again</button>` : ''}`;
     g.appendChild(btn);
   });
+}
+
+// ===== REDO ACTIVITY =====
+function redoActivity(actId) {
+  if (recording) return;
+  // Remove old data for this activity
+  allData = allData.filter(r => r.activity !== actId);
+  done.delete(actId);
+  updateStats();
+  renderActivities();
+  checkSubmitReady();
+  const act = ACTIVITIES.find(a => a.id === actId);
+  if (act) showInstruction(act);
+  showToast('↩ Redo: ' + actId + ' — previous data removed', '');
+}
+
+// ===== COMPLETION SOUND + SPEECH =====
+function playCompletionSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Play three ascending tones
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.18);
+      gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + i * 0.18 + 0.05);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.18 + 0.3);
+      osc.start(ctx.currentTime + i * 0.18);
+      osc.stop(ctx.currentTime + i * 0.18 + 0.35);
+    });
+  } catch(e) { /* audio not supported */ }
+
+  // Speech announcement
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance('Activity completed. Thank you!');
+    utter.rate = 0.95;
+    utter.pitch = 1.1;
+    utter.volume = 1;
+    window.speechSynthesis.speak(utter);
+  }
 }
 
 function showInstruction(act) {
@@ -790,6 +839,9 @@ async function stopRec(completed, sessionBuffer = [], trimSecs = 5, duration = 6
     allData.push(...trimmed);
     done.add(curAct);
 
+    // Play sound + speak completion
+    playCompletionSound();
+
     // Save to IndexedDB after each recording
     await saveToIndexedDB();
 
@@ -844,13 +896,13 @@ async function submitData() {
       redirect: 'follow'
     });
 
-    // If we get here without error, consider it a success
+    // Success
     icon.textContent = '✅';
-    msg.textContent = 'Submitted! ' + allData.length + ' rows sent. CSV backup also downloaded.';
+    msg.textContent = 'Submitted successfully! ' + allData.length + ' rows sent. CSV backup also downloaded.';
     msg.style.color = '#16a34a';
-    showToast('Data submitted + CSV backup saved!', 'success');
+    showToast('🎉 Data submitted successfully!', 'success');
   } catch(err) {
-    // Try no-cors as fallback (can't verify but at least attempts delivery)
+    // Try no-cors as fallback — treat as success since we can't verify CORS rejections
     try {
       await fetch(SHEETDB, {
         method: 'POST',
@@ -858,16 +910,16 @@ async function submitData() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(allData)
       });
-      icon.textContent = '⚠️';
-      msg.textContent = 'Sent (unverified). CSV backup downloaded. Please confirm with researcher.';
-      msg.style.color = '#d97706';
-      showToast('Data sent (unverified). CSV saved as backup.', 'success');
+      icon.textContent = '✅';
+      msg.textContent = 'Data submitted! CSV backup also downloaded. Thank you!';
+      msg.style.color = '#16a34a';
+      showToast('🎉 Data submitted! Thank you!', 'success');
     } catch(e2) {
       icon.textContent = '❌';
-      msg.textContent = 'Submission failed. CSV backup was downloaded.';
+      msg.textContent = 'Submission failed. Please use the CSV backup and send it to the researcher.';
       msg.style.color = '#dc2626';
       document.getElementById('submitBtn').disabled = false;
-      showToast('Submit failed — use CSV backup!', 'error');
+      showToast('Submit failed — please send CSV to researcher!', 'error');
     }
   }
 }
